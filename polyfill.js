@@ -1,8 +1,17 @@
-import { getRandomValues as expoCryptoGetRandomValues } from 'expo-crypto'
-import { Buffer } from 'buffer'
+import { Buffer } from 'buffer';
+import { getRandomValues as expoCryptoGetRandomValues } from 'expo-crypto';
 
-global.Buffer = Buffer
+// Polyfill for Buffer
+global.Buffer = Buffer;
 
+Buffer.prototype.subarray = function subarray(
+    begin,
+    end
+  ) {
+    const result = Uint8Array.prototype.subarray.apply(this, [begin, end]);
+    Object.setPrototypeOf(result, Buffer.prototype); // Explicitly add the `Buffer` prototype (adds `readUIntLE`!)
+    return result;
+  };
 // getRandomValues polyfill
 class Crypto {
   getRandomValues = expoCryptoGetRandomValues
@@ -17,5 +26,8 @@ const webCrypto = typeof crypto !== 'undefined' ? crypto : new Crypto()
       enumerable: true,
       get: () => webCrypto,
     })
+  }
+  if (typeof globalThis.structuredClone === 'undefined') {
+    globalThis.structuredClone = (obj) => JSON.parse(JSON.stringify(obj));
   }
 })()

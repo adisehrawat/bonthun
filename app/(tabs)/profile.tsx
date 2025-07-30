@@ -1,19 +1,69 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { Settings, CircleHelp as HelpCircle, LogOut, User, Wallet } from 'lucide-react-native';
-import { mockUser } from '@/data/mockData';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import ProfileCreateModal from '@/components/profile/ProfileCreateModal';
 import AccountModal from '@/components/profile/account';
+import ProfileCreateModal from '@/components/profile/ProfileCreateModal';
 import ProfileUpdateModal from '@/components/profile/ProfileUpdateModal';
-import { useWalletUi } from '@/components/solana/use-wallet-ui'
+import { useWalletUi } from '@/components/solana/use-wallet-ui';
+import { Avatar } from '@/components/ui/Avatar';
+import { useProfile } from '@/contexts/ProfileContext';
+import { lamportsToSol } from '@/utils/lamports-to-sol';
+import { CircleHelp as HelpCircle, LogOut, User, UserPlus, Wallet } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function Profile() {
-    const [isHunter, setIsHunter] = useState(mockUser.role === 'hunter');
-    const [showProfileModal, setShowProfileModal] = React.useState(false);
-    const [isAccountModalVisible, setAccountModalVisible] = useState(false);
+export default function ProfileScreen() {
+    const { profile, isProfileLoaded, refreshProfile } = useProfile();
+    const [isCreateModalVisible, setCreateModalVisible] = useState(false);
     const [isUpdateModalVisible, setUpdateModalVisible] = useState(false);
-    const { disconnect } = useWalletUi()
+    const [isAccountModalVisible, setAccountModalVisible] = useState(false);
+    const { disconnect } = useWalletUi();
+    const [isHunter, setIsHunter] = useState(true);
+
+    const handleCreateModalClose = () => {
+        setCreateModalVisible(false);
+        refreshProfile();
+    }
+
+    if (!isProfileLoaded) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text>Loading profile...</Text>
+            </View>
+        );
+    }
+
+    if (!profile) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.centerCard}>
+                    <UserPlus size={48} color="#2563EB" />
+                    <Text style={styles.centerTitle}>Create your profile first</Text>
+                    <Text style={styles.centerText}>
+                        You need a profile to see projects.
+                    </Text>
+                    <View style={styles.centerButtons}>
+                        <TouchableOpacity
+                            style={styles.centerBtn}
+                            onPress={() => setCreateModalVisible(true)}
+                        >
+                            <Text style={styles.centerBtnText}>Create Profile</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+                <ProfileCreateModal
+                    visible={isCreateModalVisible}
+                    onClose={handleCreateModalClose}
+                />
+            </SafeAreaView>
+        );
+    }
+
+    console.log('progile bounties completed', profile?.bounties_completed.toString());
+    console.log('progile bounties completed as client', profile?.bounties_completed_as_client.toString());
+    console.log('progile bounties rewarded', profile?.bounties_rewarded.toString());
+    console.log('progile bounties posted', profile?.bounties_posted.toString());
+    console.log('progile total sol earned', profile?.total_sol_earned.toString());
+    console.log('progile total sol spent', profile?.total_sol_spent.toString());
+    console.log('progile success rate', profile?.success_rate.toString());
 
     const openModal = () => setAccountModalVisible(true);
     const closeModal = () => setAccountModalVisible(false);
@@ -21,112 +71,105 @@ export default function Profile() {
     const openUModal = () => setUpdateModalVisible(true);
     const closeUModal = () => setUpdateModalVisible(false);
 
-    const currentUser = {
-        ...mockUser,
-        role: isHunter ? 'hunter' : 'client',
-    };
-
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView style={styles.scrollView}>
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>Profile</Text>
-                    <TouchableOpacity style={styles.editButton} onPress={() => {
-                            setShowProfileModal(true);
-                        }}>
-                    <Text style={{ color: '#2563EB', fontWeight: '600' }}>Create Profile</Text>
-                </TouchableOpacity>
-            </View>
+                </View>
 
-            {/* User Info */}
-            <View style={styles.userCard}>
-                <View style={styles.userInfo}>
-                    <Image source={{ uri: currentUser.avatar }} style={styles.avatar} />
-                    <Text style={styles.userName}>{currentUser.name}</Text>
-                    <Text style={styles.userEmail}>{currentUser.email}</Text>
+                {/* User Info */}
+                <View style={styles.userCard}>
+                    <View style={styles.userInfo}>
+                        <Avatar
+                            source={profile.avatar}
+                            name={profile.username}
+                            size={80}
+                        />
+                        <Text style={styles.userName}>{profile.username}</Text>
+                        <Text style={styles.userEmail}>{profile.email}</Text>
 
-                    {/* Role Toggle */}
-                    <View style={styles.roleToggle}>
-                        <TouchableOpacity
-                            onPress={() => setIsHunter(true)}
-                            style={[styles.roleButton, isHunter && styles.roleButtonActive]}
-                        >
-                            <Text style={[styles.roleButtonText, isHunter && styles.roleButtonTextActive]}>
-                                Hunter
+                        {/* Role Toggle */}
+                        <View style={styles.roleToggle}>
+                            <TouchableOpacity
+                                onPress={() => setIsHunter(true)}
+                                style={[styles.roleButton, isHunter && styles.roleButtonActive]}
+                            >
+                                <Text style={[styles.roleButtonText, isHunter && styles.roleButtonTextActive]}>
+                                    Hunter
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => setIsHunter(false)}
+                                style={[styles.roleButton, !isHunter && styles.roleButtonActive]}
+                            >
+                                <Text style={[styles.roleButtonText, !isHunter && styles.roleButtonTextActive]}>
+                                    Client
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+                    {/* Stats */}
+                    <View style={styles.statsContainer}>
+                        <View style={styles.statItem}>
+                            <Text style={styles.statValue}>
+                                {isHunter ? profile.bounties_completed.toString() : profile.bounties_posted.toString()}
                             </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={() => setIsHunter(false)}
-                            style={[styles.roleButton, !isHunter && styles.roleButtonActive]}
-                        >
-                            <Text style={[styles.roleButtonText, !isHunter && styles.roleButtonTextActive]}>
-                                Client
+                            <Text style={styles.statLabel}>
+                                {isHunter ? 'Completed' : 'Posted'}
                             </Text>
-                        </TouchableOpacity>
+                        </View>
+                        <View style={styles.statItem}>
+                            <Text style={[styles.statValue, styles.statValueGreen]}>
+                                {isHunter ? lamportsToSol(profile.total_sol_earned.toNumber()) : lamportsToSol(profile.total_sol_spent.toNumber())} SOL
+                            </Text>
+                            <Text style={styles.statLabel}>
+                                {isHunter ? 'Earned' : 'Spent'}
+                            </Text>
+                        </View>
+                        <View style={styles.statItem}>
+                            <Text style={[styles.statValue, styles.statValueBlue]}>{isHunter ? profile.success_rate.toString() : profile.bounties_completed_as_client.toNumber()}</Text>
+                            <Text style={styles.statLabel}>{isHunter ? 'Success' : 'Rewarded'}</Text>
+                        </View>
                     </View>
                 </View>
 
-                {/* Stats */}
-                <View style={styles.statsContainer}>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statValue}>
-                            {isHunter ? currentUser.completedBounties : 5}
-                        </Text>
-                        <Text style={styles.statLabel}>
-                            {isHunter ? 'Completed' : 'Posted'}
-                        </Text>
-                    </View>
-                    <View style={styles.statItem}>
-                        <Text style={[styles.statValue, styles.statValueGreen]}>
-                            ${isHunter ? currentUser.totalEarned : currentUser.totalSpent}
-                        </Text>
-                        <Text style={styles.statLabel}>
-                            {isHunter ? 'Earned' : 'Spent'}
-                        </Text>
-                    </View>
-                    <View style={styles.statItem}>
-                        <Text style={[styles.statValue, styles.statValueBlue]}>{currentUser.successRate}%</Text>
-                        <Text style={styles.statLabel}>Success</Text>
-                    </View>
+                <View style={styles.menuCard}>
+                    <TouchableOpacity style={styles.menuItem} onPress={openUModal}>
+                        <User size={20} color="#6B7280" />
+                        <Text style={styles.menuItemText}>Edit Profile</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={openModal}>
+                        <Wallet size={20} color="#6B7280" />
+                        <Text style={styles.menuItemText}>Account</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]}>
+                        <HelpCircle size={20} color="#6B7280" />
+                        <Text style={styles.menuItemText}>Help & Support</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={() => disconnect()}>
+                        <LogOut size={20} color="#EF4444" />
+                        <Text style={[styles.menuItemText, styles.menuItemTextRed]}>Disconnect</Text>
+                    </TouchableOpacity>
                 </View>
-            </View>
 
-            <View style={styles.menuCard}>
-                <TouchableOpacity style={styles.menuItem} onPress={openUModal}>
-                    <User size={20} color="#6B7280" />
-                    <Text style={styles.menuItemText}>Edit Profile</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={openModal}>
-                    <Wallet size={20} color="#6B7280" />
-                    <Text style={styles.menuItemText}>Account</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]}>
-                    <HelpCircle size={20} color="#6B7280" />
-                    <Text style={styles.menuItemText}>Help & Support</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={() => disconnect()}>
-                    <LogOut size={20} color="#EF4444" />
-                    <Text style={[styles.menuItemText, styles.menuItemTextRed]}>Disconnect</Text>
-                </TouchableOpacity>
-            </View>
-
-            <View style={styles.bottomSpacing} />
-        </ScrollView>
-        <ProfileCreateModal visible={showProfileModal} onClose={() => setShowProfileModal(false)} />
-            <AccountModal 
-                isVisible={isAccountModalVisible} 
-                onClose={closeModal} 
+                <View style={styles.bottomSpacing} />
+            </ScrollView>
+            <AccountModal
+                isVisible={isAccountModalVisible}
+                onClose={closeModal}
             />
-            <ProfileUpdateModal 
-                isVisible={isUpdateModalVisible} 
-                onClose={closeUModal} 
+            <ProfileUpdateModal
+                isVisible={isUpdateModalVisible}
+                onClose={closeUModal}
             />
-    </SafeAreaView >
-  );
+        </SafeAreaView >
+    );
 }
 
 const styles = StyleSheet.create({
@@ -322,5 +365,51 @@ const styles = StyleSheet.create({
         padding: 8,
         borderRadius: 8,
         backgroundColor: '#EBF8FF',
+    },
+    centerCard: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 32,
+    },
+    centerTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#111827',
+        marginTop: 16,
+        textAlign: 'center',
+    },
+    centerText: {
+        fontSize: 14,
+        color: '#6B7280',
+        textAlign: 'center',
+        marginTop: 8,
+        marginBottom: 24,
+        lineHeight: 20,
+    },
+    centerButtons: {
+        flexDirection: 'column',
+        gap: 12,
+        width: '100%',
+        maxWidth: 240,
+    },
+    centerBtn: {
+        backgroundColor: '#2563EB',
+        paddingVertical: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    centerBtnText: {
+        color: '#fff',
+        fontWeight: '600',
+        fontSize: 16,
+    },
+    centerBtnGhost: {
+        backgroundColor: 'transparent',
+        borderWidth: 1,
+        borderColor: '#2563EB',
+    },
+    centerBtnGhostText: {
+        color: '#2563EB',
     },
 });

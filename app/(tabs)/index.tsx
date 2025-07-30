@@ -1,19 +1,25 @@
 import BountyCard from '@/components/bounty/BountyCard';
 import BountyDetailsModal from '@/components/bounty/BountyDetails';
+import ProfileCreateModal from '@/components/profile/ProfileCreateModal';
+import { useProfile } from '@/contexts/ProfileContext';
 import { mockBounties } from '@/data/mockData';
-import { Filter, MapPin, Search } from 'lucide-react-native';
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bounty } from '@/types/bounty';
+import { useRouter } from 'expo-router';
+import { Filter, MapPin, UserPlus } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 export default function BrowseBounties() {
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [selectedStatus, setSelectedStatus] = useState<string>('open');
     const [selectedBounty, setSelectedBounty] = useState<Bounty | null>(null);
     const [isModalVisible, setModalVisible] = useState(false);
     const [claimedBounties, setClaimedBounties] = useState<{ [key: string]: string | null }>({});
     const [refreshing, setRefreshing] = useState(false);
+    const { profile, isProfileLoaded } = useProfile();
+    const [showProfileModal, setShowProfileModal] = useState(false);
+    const router = useRouter();
 
     const handleRefresh = () => {
         setRefreshing(true);
@@ -29,15 +35,11 @@ export default function BrowseBounties() {
     };
 
 
-    const categories = ['all', 'delivery', 'research', 'task', 'mystery', 'tech'];
-    const statuses = ['open', 'claimed', 'completed'];
-
     const filteredBounties = mockBounties.filter((bounty) => {
         const matchesSearch =
             bounty.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             bounty.description.toLowerCase().includes(searchQuery.toLowerCase());
 
-        const matchesCategory = selectedCategory === 'all' || bounty.category === selectedCategory;
 
         const isClaimed = claimedBounties.hasOwnProperty(bounty.id);
         const matchesStatus =
@@ -46,96 +48,95 @@ export default function BrowseBounties() {
                     selectedStatus === 'completed' ? isClaimed && !!claimedBounties[bounty.id] :
                         false;
 
-        return matchesSearch && matchesCategory && matchesStatus;
+        return matchesSearch && matchesStatus;
     });
+
+    if (!isProfileLoaded) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text>Loading...</Text>
+            </View>
+        )
+    }
 
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Browse Bounties</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}
-                >
-                    {categories.map((category) => (
-                        <TouchableOpacity
-                            key={category}
-                            onPress={() => setSelectedCategory(category)}
-                            style={[
-                                styles.categoryButton,
-                                selectedCategory === category ? styles.categoryButtonActive : styles.categoryButtonInactive
-                            ]}
-                        >
-                            <Text style={[
-                                styles.categoryButtonText,
-                                selectedCategory === category ? styles.categoryButtonTextActive : styles.categoryButtonTextInactive
-                            ]}>
-                                {category}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
 
-                {/* Status Filter */}
-                <View style={styles.statusContainer}>
-                    {statuses.map((status) => (
-                        <TouchableOpacity
-                            key={status}
-                            onPress={() => setSelectedStatus(status)}
-                            style={[
-                                styles.statusButton,
-                                selectedStatus === status ? styles.statusButtonActive : styles.statusButtonInactive
-                            ]}
-                        >
-                            <Text style={[
-                                styles.statusButtonText,
-                                selectedStatus === status ? styles.statusButtonTextActive : styles.statusButtonTextInactive
-                            ]}>
-                                {status}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-            </View>
 
-            {/* Results */}
-            <ScrollView style={styles.content}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={handleRefresh}
-                        colors={['#3B82F6']} // Android spinner color
-                    />
-                }
-            >
-                <View style={styles.resultsHeader}>
-                    <Text style={styles.resultsText}>
-                        {filteredBounties.length} bounties found
+            {!profile && (
+                <View style={styles.centerCard}>
+                    <UserPlus size={48} color="#2563EB" />
+                    <Text style={styles.centerTitle}>Create your profile first</Text>
+                    <Text style={styles.centerText}>
+                        You need a profile to see projects.
                     </Text>
-                    <TouchableOpacity style={styles.sortButton}>
-                        <Filter size={16} color="#6B7280" />
-                        <Text style={styles.sortText}>Sort</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {filteredBounties.map((bounty) => (
-                    <BountyCard
-                        key={bounty.id}
-                        bounty={bounty}
-                        onPress={() => handlePress(bounty)}
-                    />
-                ))}
-
-                {filteredBounties.length === 0 && (
-                    <View style={styles.emptyState}>
-                        <MapPin size={48} color="#D1D5DB" />
-                        <Text style={styles.emptyTitle}>No bounties found</Text>
-                        <Text style={styles.emptyDescription}>
-                            Try adjusting your search criteria or check back later
-                        </Text>
+                    <View style={styles.centerButtons}>
+                        <TouchableOpacity
+                            style={styles.centerBtn}
+                            onPress={() => setShowProfileModal(true)}
+                        >
+                            <Text style={styles.centerBtnText}>Create Profile</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.centerBtn, styles.centerBtnGhost]}
+                            onPress={() => router.push('/(tabs)/profile')}
+                        >
+                            <Text style={[styles.centerBtnText, styles.centerBtnGhostText]}>
+                                Go to Profile tab
+                            </Text>
+                        </TouchableOpacity>
                     </View>
-                )}
-            </ScrollView>
+                </View>
+            )}
+
+            {/* Header */}
+            {profile && (
+                <>
+                    <View style={styles.header}>
+                        <Text style={styles.headerTitle}>Browse Bounties</Text>
+                    </View>
+
+                    {/* Results */}
+                    <ScrollView style={styles.content}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={refreshing}
+                                onRefresh={handleRefresh}
+                                colors={['#3B82F6']} // Android spinner color
+                            />
+                        }
+                    >
+                        <View style={styles.resultsHeader}>
+                            <Text style={styles.resultsText}>
+                                {filteredBounties.length} bounties found
+                            </Text>
+                            <TouchableOpacity style={styles.sortButton}>
+                                <Filter size={16} color="#6B7280" />
+                                <Text style={styles.sortText}>Sort</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {filteredBounties.map((bounty) => (
+                            <BountyCard
+                                key={bounty.id}
+                                bounty={bounty}
+                                onPress={() => handlePress(bounty)}
+                            />
+                        ))}
+
+                        {filteredBounties.length === 0 && (
+                            <View style={styles.emptyState}>
+                                <MapPin size={48} color="#D1D5DB" />
+                                <Text style={styles.emptyTitle}>No bounties found</Text>
+                                <Text style={styles.emptyDescription}>
+                                    Try adjusting your search criteria or check back later
+                                </Text>
+                            </View>
+                        )}
+                    </ScrollView>
+                </>
+            )}
             <BountyDetailsModal
                 visible={isModalVisible}
                 onClose={() => setModalVisible(false)}
@@ -152,6 +153,8 @@ export default function BrowseBounties() {
                     setModalVisible(false);
                 }}
             />
+            <ProfileCreateModal visible={showProfileModal} onClose={() => setShowProfileModal(false)} />
+
         </SafeAreaView>
     );
 }
@@ -280,5 +283,51 @@ const styles = StyleSheet.create({
         color: '#9CA3AF',
         textAlign: 'center',
         marginTop: 8,
+    },
+    centerCard: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 32,
+    },
+    centerTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#111827',
+        marginTop: 16,
+        textAlign: 'center',
+    },
+    centerText: {
+        fontSize: 14,
+        color: '#6B7280',
+        textAlign: 'center',
+        marginTop: 8,
+        marginBottom: 24,
+        lineHeight: 20,
+    },
+    centerButtons: {
+        flexDirection: 'column',
+        gap: 12,
+        width: '100%',
+        maxWidth: 240,
+    },
+    centerBtn: {
+        backgroundColor: '#2563EB',
+        paddingVertical: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    centerBtnText: {
+        color: '#fff',
+        fontWeight: '600',
+        fontSize: 16,
+    },
+    centerBtnGhost: {
+        backgroundColor: 'transparent',
+        borderWidth: 1,
+        borderColor: '#2563EB',
+    },
+    centerBtnGhostText: {
+        color: '#2563EB',
     },
 });

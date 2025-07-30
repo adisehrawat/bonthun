@@ -3,8 +3,6 @@ export interface Bounty {
   title: string;
   description: string;
   reward: number;
-  category: 'delivery' | 'research' | 'task' | 'mystery' | 'tech';
-  difficulty: 'easy' | 'medium' | 'hard' | 'expert';
   status: 'open' | 'claimed' | 'completed' | 'verified';
   clientName: string;
   clientAvatar: string;
@@ -26,6 +24,7 @@ export interface User {
   totalSpent: number;
   completedBounties: number;
   successRate: number;
+  bountiesRewarded: number;
   rating: number;
 }
 // </parameter>

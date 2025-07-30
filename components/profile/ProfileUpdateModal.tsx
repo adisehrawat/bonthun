@@ -1,6 +1,7 @@
+import { useProfile } from '@/contexts/ProfileContext';
 import React, { useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View, KeyboardAvoidingView, Platform } from 'react-native';
-import { useRouter } from 'expo-router';
+import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { useDeleteUserProfile, useEditUserProfile } from '../data/bonthun-data-access';
 import { Input } from '../ui/Input';
 
 interface ProfileUpdateModalProps {
@@ -10,21 +11,35 @@ interface ProfileUpdateModalProps {
 
 const ProfileUpdateModal = ({ isVisible, onClose }: ProfileUpdateModalProps) => {
     const [name, setName] = useState('');
+    const { profile, setProfile, clearProfile, refreshProfile } = useProfile();
     const [email, setEmail] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    const router = useRouter();
-
+    const deleteClient = useDeleteUserProfile();
+    const editClient = useEditUserProfile();
     const onDelete = async () => {
-        console.log('onDelete');
-        router.replace('/(tabs)/profile');
+        setSubmitting(true);
+        try {
+            await deleteClient.mutateAsync();
+            await refreshProfile();
+            onClose();
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         setSubmitting(true);
-        setTimeout(() => {
-            setSubmitting(false);
+        try {
+            await editClient.mutateAsync({ username: name, email: email });
+            await refreshProfile();
             onClose();
-        }, 1000);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (

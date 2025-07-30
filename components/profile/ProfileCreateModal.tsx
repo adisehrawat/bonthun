@@ -1,8 +1,10 @@
-import { router } from 'expo-router';
+import { useProfile } from '@/contexts/ProfileContext';
 import React, { useEffect, useState } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useCreateUserProfile } from '../data/bonthun-data-access';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+
 
 interface ProfileCreateModalProps {
   visible: boolean;
@@ -10,15 +12,17 @@ interface ProfileCreateModalProps {
 }
 
 const ProfileCreateModal: React.FC<ProfileCreateModalProps> = ({ visible, onClose }) => {
-  const [name, setName] = useState('');
+  const [username, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const { refreshProfile } = useProfile();
+  const createUserProfile = useCreateUserProfile();
 
   useEffect(() => {
     if (!visible) {
       setSubmitting(false);
-      setName('');
+      setUserName('');
       setEmail('');
       setError(null);
     }
@@ -27,11 +31,23 @@ const ProfileCreateModal: React.FC<ProfileCreateModalProps> = ({ visible, onClos
   const handleSubmit = async () => {
     setError(null);
 
-    if (!name.trim() || !email.trim()) {
+    if (!username.trim() || !email.trim()) {
       setError('Please enter your name and email.');
       return;
     }
-    router.replace('/(tabs)/profile');
+    setSubmitting(true);
+    try {
+        console.log('[ProfileCreateModal] Creating user profile');
+        await createUserProfile.mutateAsync({username,email});
+        await refreshProfile();
+        setSubmitting(false);
+        onClose();
+    }
+    catch (err: any){
+        setError(err?.message || 'Failed to create profile.');
+        setSubmitting(false);
+    }
+    
   };
 
   return (
@@ -41,8 +57,8 @@ const ProfileCreateModal: React.FC<ProfileCreateModalProps> = ({ visible, onClos
           <Text style={styles.title}>Create Your Profile</Text>
               <Input
                 label="Name"
-                value={name}
-                onChangeText={setName}
+                value={username}
+                onChangeText={setUserName}
                 placeholder="Enter your name"
                 required
               />
