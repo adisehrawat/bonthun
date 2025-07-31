@@ -1,23 +1,28 @@
 import BountyCard from '@/components/bounty/BountyCard';
-import { mockBounties } from '@/data/mockData';
+import BountyDetailsModal from '@/components/bounty/BountyDetails';
+import { useAuthorization } from '@/components/solana/use-authorization';
+import { useGetBounties } from '@/components/utils/fetch-bounties';
+import { Bounty } from '@/types/bounty';
 import { CircleCheck as CheckCircle, Clock, Eye, TrendingUp } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 export default function MyBounties() {
-  const [activeTab, setActiveTab] = useState<'claimed' | 'completed' | 'posted'>('claimed');
+          const [activeTab, setActiveTab] = useState<'claimed' | 'completed' | 'posted'>('claimed');
+    const { data: bounties, isLoading } = useGetBounties();
+    const { selectedAccount } = useAuthorization();
 
-  const claimedBounties = mockBounties.filter(bounty => 
-    bounty.status === 'claimed' && bounty.claimedBy === 'Alex Hunter'
-  );
-  
-  const completedBounties = mockBounties.filter(bounty => 
-    bounty.status === 'completed' && bounty.claimedBy === 'Alex Hunter'
-  );
+    const claimedBounties = (bounties ?? []).filter(bounty =>
+        bounty.status === 'claimed' && bounty.hunter?.id === selectedAccount?.publicKey.toString()
+    );
 
-  const postedBounties = mockBounties.filter(bounty => 
-    bounty.clientName === 'Alex Hunter'
-  );
+    const completedBounties = (bounties ?? []).filter(bounty =>
+        bounty.status === 'completed' && bounty.hunter?.id === selectedAccount?.publicKey.toString()
+    );
+
+    const postedBounties = (bounties ?? []).filter(bounty =>
+        bounty.client.id === selectedAccount?.publicKey.toString()
+    );
 
   const getCurrentBounties = () => {
     switch (activeTab) {
@@ -32,11 +37,16 @@ export default function MyBounties() {
     }
   };
 
-  const handleBountyPress = (bountyId: string) => {
-    console.log('Selected bounty:', bountyId);
+        const [claimedBountiesMap, setClaimedBountiesMap] = useState<{ [key: string]: string | null }>({});
+    const [selectedBounty, setSelectedBounty] = useState<Bounty | null>(null);
+  const [isModalVisible, setModalVisible] = useState(false);
+
+  const handleBountyPress = (bounty: Bounty) => {
+    setSelectedBounty(bounty);
+    setModalVisible(true);
   };
 
-  const stats = {
+    const stats = {
     claimed: claimedBounties.length,
     completed: completedBounties.length,
     totalEarned: 650,
@@ -112,7 +122,8 @@ export default function MyBounties() {
           <BountyCard
             key={bounty.id}
             bounty={bounty}
-            onPress={() => handleBountyPress(bounty.id)}
+                        onPress={() => handleBountyPress(bounty)}
+            isLoading={false}
           />
         ))}
 
@@ -130,6 +141,27 @@ export default function MyBounties() {
           </View>
         )}
       </ScrollView>
+      <BountyDetailsModal
+        visible={isModalVisible}
+        onClose={() => setModalVisible(false)}
+        bounty={selectedBounty}
+                isClaimed={!!(selectedBounty && claimedBountiesMap[selectedBounty.id] !== undefined)}
+        hasSubmitted={!!(selectedBounty && claimedBountiesMap[selectedBounty.id])}
+        claimedBounties={claimedBountiesMap}
+        onClaim={(bounty) => {
+          setClaimedBountiesMap(prev => ({ ...prev, [bounty.id]: null }));
+          setModalVisible(false);
+        }}
+        onSubmit={(bounty, link) => {
+          setClaimedBountiesMap(prev => ({ ...prev, [bounty.id]: link }));
+          setModalVisible(false);
+        }}
+        isMyPost={activeTab === 'posted'}
+        onAward={(bounty, hunterId) => {
+          console.log(`Awarding bounty ${bounty.id} to hunter ${hunterId}`);
+          setModalVisible(false);
+        }}
+      />
     </SafeAreaView>
   );
 }

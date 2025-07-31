@@ -30,6 +30,12 @@ export default function ProfileScreen() {
             </View>
         );
     }
+    
+    const openModal = () => setAccountModalVisible(true);
+    const closeModal = () => setAccountModalVisible(false);
+
+    const openUModal = () => setUpdateModalVisible(true);
+    const closeUModal = () => setUpdateModalVisible(false);
 
     if (!profile) {
         return (
@@ -49,6 +55,10 @@ export default function ProfileScreen() {
                         </TouchableOpacity>
                     </View>
                 </View>
+                <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={() => disconnect()}>
+                        <LogOut size={20} color="#EF4444" />
+                        <Text style={[styles.menuItemText, styles.menuItemTextRed]}>Disconnect</Text>
+                    </TouchableOpacity>
                 <ProfileCreateModal
                     visible={isCreateModalVisible}
                     onClose={handleCreateModalClose}
@@ -65,11 +75,7 @@ export default function ProfileScreen() {
     console.log('progile total sol spent', profile?.total_sol_spent.toString());
     console.log('progile success rate', profile?.success_rate.toString());
 
-    const openModal = () => setAccountModalVisible(true);
-    const closeModal = () => setAccountModalVisible(false);
-
-    const openUModal = () => setUpdateModalVisible(true);
-    const closeUModal = () => setUpdateModalVisible(false);
+    
 
     return (
         <SafeAreaView style={styles.container}>

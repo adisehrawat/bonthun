@@ -3,6 +3,9 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useDeleteUserProfile, useEditUserProfile } from '../data/bonthun-data-access';
 import { Input } from '../ui/Input';
+import Toast from 'react-native-toast-message';
+
+
 
 interface ProfileUpdateModalProps {
     isVisible: boolean;
@@ -22,9 +25,18 @@ const ProfileUpdateModal = ({ isVisible, onClose }: ProfileUpdateModalProps) => 
             await deleteClient.mutateAsync();
             await refreshProfile();
             clearProfile();
+            Toast.show({
+                type: 'success',
+                text1: 'User profile deleted successfully',
+            });
             onClose();
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
+            Toast.show({
+                type: 'error',
+                text1: 'Error deleting profile',
+                text2: e.message,
+            });
         } finally {
             setSubmitting(false);
         }
@@ -35,9 +47,19 @@ const ProfileUpdateModal = ({ isVisible, onClose }: ProfileUpdateModalProps) => 
         try {
             await editClient.mutateAsync({ username: name, email: email });
             await refreshProfile();
+            Toast.show({
+                type: 'success',
+                text1: 'User profile edited successfully',
+            });
             onClose();
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
+            Toast.show({
+                type: 'error',
+                text1: 'Error editing profile',
+                text2: e.message,
+            });
+            onClose();
         } finally {
             setSubmitting(false);
         }

@@ -2,35 +2,33 @@ import { Clock, DollarSign, MapPin } from 'lucide-react-native';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Bounty } from '../../types/bounty';
+import { Avatar } from '../ui/Avatar';
 
 interface BountyCardProps {
     bounty: Bounty;
     onPress: () => void;
+    isLoading: boolean;
 }
 
-const categoryColors = {
-    delivery: { backgroundColor: '#DBEAFE', color: '#1E40AF' },
-    research: { backgroundColor: '#F3E8FF', color: '#7C3AED' },
-    task: { backgroundColor: '#D1FAE5', color: '#059669' },
-    mystery: { backgroundColor: '#FED7AA', color: '#EA580C' },
-    tech: { backgroundColor: '#FEE2E2', color: '#DC2626' },
-};
 
-const difficultyColors = {
-    easy: { backgroundColor: '#D1FAE5', color: '#059669' },
-    medium: { backgroundColor: '#FEF3C7', color: '#D97706' },
-    hard: { backgroundColor: '#FEE2E2', color: '#DC2626' },
-    expert: { backgroundColor: '#F3E8FF', color: '#7C3AED' },
-};
+    const getTimeLeft = (timeLimit: number) => {
+        const timeLeft = timeLimit - Date.now() / 1000;
+        const days = Math.floor(timeLeft / (3600 * 24));
+        const hours = Math.floor((timeLeft % (3600 * 24)) / 3600);
+        if (days > 0) {
+            return `${days}d left`;
+        }
+        return `${hours}h left`;
+    };
 
-const statusColors = {
-    open: { backgroundColor: '#D1FAE5', color: '#059669' },
-    claimed: { backgroundColor: '#DBEAFE', color: '#1E40AF' },
-    completed: { backgroundColor: '#F3F4F6', color: '#374151' },
-    verified: { backgroundColor: '#F3E8FF', color: '#7C3AED' },
-};
-
-export default function BountyCard({ bounty, onPress }: BountyCardProps) {
+export default function BountyCard({ bounty, onPress, isLoading }: BountyCardProps) {
+    if (isLoading) {
+        return (
+            <View style={styles.container}>
+                <Text>Loading...</Text>
+            </View>
+        );
+    }
     return (
         <TouchableOpacity onPress={onPress} style={styles.container}>
             {/* Header */}
@@ -44,32 +42,27 @@ export default function BountyCard({ bounty, onPress }: BountyCardProps) {
                 <View style={styles.rewardContainer}>
                     <View style={styles.rewardBadge}>
                         <DollarSign size={16} color="#059669" />
-                        <Text style={styles.rewardText}>${bounty.reward}</Text>
+                        <Text style={styles.rewardText}>{bounty.reward/1000000000} SOL</Text>
                     </View>
                 </View>
             </View>
 
             {/* Client Info */}
             <View style={styles.clientInfo}>
-                <Image source={{ uri: bounty.clientAvatar }} style={styles.avatar} />
-                <Text style={styles.clientName}>{bounty.clientName}</Text>
+            <Avatar
+                            source={bounty.client.avatar}
+                            name={bounty.client.name}
+                            size={30}
+                        />
+                <Text style={styles.clientName}>{bounty.client.name}</Text>
             </View>
 
             {/* Tags */}
             <View style={styles.tagsContainer}>
-                <View style={[styles.tag, categoryColors[bounty.category]]}>
-                    <Text style={[styles.tagText, { color: categoryColors[bounty.category].color }]}>
-                        {bounty.category}
-                    </Text>
-                </View>
-                <View style={[styles.tag, difficultyColors[bounty.difficulty]]}>
-                    <Text style={[styles.tagText, { color: difficultyColors[bounty.difficulty].color }]}>
-                        {bounty.difficulty}
-                    </Text>
-                </View>
-                <View style={[styles.tag, statusColors[bounty.status]]}>
-                    <Text style={[styles.tagText, { color: statusColors[bounty.status].color }]}>
-                        {bounty.status}
+                
+                <View style={[styles.tag, { backgroundColor: bounty.status === 'open' ? '#D1FAE5' : bounty.status === 'claimed' ? '#DBEAFE' : '#F3F4F6' }]}>
+                    <Text style={[styles.tagText, { color: bounty.status === 'open' ? '#059669' : bounty.status === 'claimed' ? '#1E40AF' : '#374151' }]}>
+                        {bounty.status.charAt(0).toUpperCase() + bounty.status.slice(1)}
                     </Text>
                 </View>
             </View>
@@ -82,7 +75,7 @@ export default function BountyCard({ bounty, onPress }: BountyCardProps) {
                 </View>
                 <View style={styles.footerItem}>
                     <Clock size={14} color="#6B7280" />
-                    <Text style={styles.footerText}>{bounty.timeLimit}</Text>
+                    <Text style={styles.footerText}>{getTimeLeft(bounty.timeLimit)}</Text>
                 </View>
             </View>
         </TouchableOpacity>
@@ -153,6 +146,7 @@ const styles = StyleSheet.create({
     clientName: {
         color: '#374151',
         fontWeight: '500',
+        marginLeft: 8,
     },
     tagsContainer: {
         flexDirection: 'row',

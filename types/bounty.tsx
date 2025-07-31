@@ -3,15 +3,13 @@ export interface Bounty {
   title: string;
   description: string;
   reward: number;
-  status: 'open' | 'claimed' | 'completed' | 'verified';
-  clientName: string;
-  clientAvatar: string;
   location: string;
-  timeLimit: string;
-  createdAt: string;
-  claimedBy?: string;
-  completedAt?: string;
-  requirements: string[];
+  timeLimit: number;
+  createdAt: number;
+  status: 'open' | 'claimed' | 'completed' | 'verified';
+  client: User;
+  hunter: User;
+  bump: number;
 }
 
 export interface User {

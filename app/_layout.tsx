@@ -1,16 +1,19 @@
+import { AppProviders } from '@/components/app-providers'
+import { AppSplashController } from '@/components/app-splash-controller'
+import { useAuth } from '@/components/auth/auth-provider'
+import { AppProvider } from '@/contexts/AppContext'
+import { ProfileProvider } from '@/contexts/ProfileContext'
+import { useTrackLocations } from '@/hooks/use-track-locations'
 import { PortalHost } from '@rn-primitives/portal'
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
-import { StatusBar } from 'expo-status-bar'
-import 'react-native-reanimated'
-import { AppProviders } from '@/components/app-providers'
-import { useCallback } from 'react'
 import * as SplashScreen from 'expo-splash-screen'
+import { StatusBar } from 'expo-status-bar'
+import { useCallback } from 'react'
 import { View } from 'react-native'
-import { useTrackLocations } from '@/hooks/use-track-locations'
-import { AppSplashController } from '@/components/app-splash-controller'
-import { useAuth } from '@/components/auth/auth-provider'
-import { ProfileProvider } from '@/contexts/ProfileContext'
+import 'react-native-reanimated'
+
+import Toast from 'react-native-toast-message'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -45,13 +48,16 @@ export default function RootLayout() {
     return (
         <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
             <AppProviders>
+                <AppProvider>
                 <ProfileProvider>
                     <AppSplashController />
                     <RootNavigator />
                     <StatusBar style="auto" />
                 </ProfileProvider>
+                </AppProvider>
             </AppProviders>
             <PortalHost />
+            <Toast />
         </View>
     )
 }

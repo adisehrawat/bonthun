@@ -10,6 +10,7 @@ import {
 } from "@solana/web3.js";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
+import Toast from 'react-native-toast-message';
 import { useConnection } from "../solana/solana-provider";
 import { useAuthorization } from "../solana/use-authorization";
 
@@ -122,9 +123,19 @@ export function useCreateUserProfile() {
                 throw err;
             }
         },
-        onSuccess: () => {
-            console.log("client profile created successfully");
+        onSuccess: (txid) => {
+            Toast.show({
+                type: 'success',
+                text1: 'User profile created successfully',
+            });
             return queryClient.invalidateQueries({ queryKey: ['profile', account?.publicKey?.toString()] });
+        },
+        onError: (error: Error) => {
+            Toast.show({
+                type: 'error',
+                text1: 'Error creating profile',
+                text2: error.message,
+            });
         }
     });
 }
@@ -184,10 +195,19 @@ export function useEditUserProfile() {
             }
         },
         onSuccess: () => {
-            console.log("client profile edited successfully");
+            Toast.show({
+                type: 'success',
+                text1: 'User profile edited successfully',
+            });
+        },
+        onError: (error: Error) => {
+            Toast.show({
+                type: 'error',
+                text1: 'Error editing profile',
+                text2: error.message,
+            });
         }
     });
-
 }
 
 export function useDeleteUserProfile() {
@@ -205,7 +225,6 @@ export function useDeleteUserProfile() {
                 if (!pubkey) throw new Error("No public key");
 
                 const profilePDA = PDA.userProfile(pubkey);
-                console.log('[deleteUserProfile] profilePDA', profilePDA.toString());
                 if (!bonthunProgram) throw new Error('Program not ready');
                 const ix = await bonthunProgram.methods
                     .deleteProfile()
@@ -215,7 +234,6 @@ export function useDeleteUserProfile() {
                         systemProgram: SystemProgram.programId,
                     })
                     .instruction();
-                console.log('[deleteUserProfile] instruction build', ix);
 
                 const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
                 const messageV0 = new TransactionMessage({
@@ -224,10 +242,7 @@ export function useDeleteUserProfile() {
                     instructions: [ix],
                 }).compileToV0Message();
                 const tx = new VersionedTransaction(messageV0);
-                console.log('[deleteUserProfile] versioned tx built: ', tx);
                 const txid = await signAndSendTransaction(tx, lastValidBlockHeight);
-                console.log('[deleteUserProfile] tx sent:', txid);
-                console.log('[deleteUserProfile] Waiting for transaction confirmation...${ txid }');
                 const result = await connection.confirmTransaction({
                     signature: txid,
                     blockhash,
@@ -237,22 +252,28 @@ export function useDeleteUserProfile() {
                 if (result.value.err) {
                     throw new Error('Transaction failed: ' + JSON.stringify(result.value.err));
                 }
-                console.log('[deleteUserProfile] Transaction confirmed.');
                 return txid;
             }
             catch (err: any) {
-                console.error('[deleteUserProfile] ERROR:', err);
                 throw err;
             }
         },
         onSuccess: () => {
-            console.log("client profile deleted successfully");
+            Toast.show({
+                type: 'success',
+                text1: 'User profile deleted successfully',
+            });
             return queryClient.invalidateQueries({ queryKey: ['profile', walletUiAccount?.publicKey?.toString()] });
+        },
+        onError: (error: Error) => {
+            Toast.show({
+                type: 'error',
+                text1: 'Error deleting profile',
+                text2: error.message,
+            });
         }
     });
-
 }
-
 
 export function useCreateBounty() {
     const connection = useConnection();
@@ -271,8 +292,6 @@ export function useCreateBounty() {
                 const profilePDA = PDA.userProfile(pubkey);
                 const bountyPDA = PDA.bounty(pubkey, title);
                 const rewardInLamports = new BN(reward.toNumber() * 1_000_000_000);
-                console.log('[createBounty] rewardInLamports', rewardInLamports.toString());
-                console.log('[createBounty] bountyPDA', bountyPDA.toString());
                 if (!bonthunProgram) throw new Error('Program not ready');
                 const ix = await bonthunProgram.methods
                     .createBounty(
@@ -289,7 +308,6 @@ export function useCreateBounty() {
                         systemProgram: SystemProgram.programId,
                     })
                     .instruction();
-                console.log('[createBounty] instruction build', ix);
 
                 const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
                 const messageV0 = new TransactionMessage({
@@ -298,10 +316,7 @@ export function useCreateBounty() {
                     instructions: [ix],
                 }).compileToV0Message();
                 const tx = new VersionedTransaction(messageV0);
-                console.log('[createBounty] versioned tx built: ', tx);
                 const txid = await signAndSendTransaction(tx, lastValidBlockHeight);
-                console.log('[createBounty] tx sent:', txid);
-                console.log('[createBounty] Waiting for transaction confirmation...${ txid }');
                 const result = await connection.confirmTransaction({
                     signature: txid,
                     blockhash,
@@ -311,17 +326,25 @@ export function useCreateBounty() {
                 if (result.value.err) {
                     throw new Error('Transaction failed: ' + JSON.stringify(result.value.err));
                 }
-                console.log('[createBounty] Transaction confirmed.');
                 return txid;
             }
             catch (err: any) {
-                console.error('[createBounty] ERROR:', err);
                 throw err;
             }
         },
         onSuccess: () => {
-            console.log("bounty created successfully");
+            Toast.show({
+                type: 'success',
+                text1: 'Bounty created successfully',
+            });
             return queryClient.invalidateQueries({ queryKey: ['bounty', account?.publicKey?.toString()] });
+        },
+        onError: (error: Error) => {
+            Toast.show({
+                type: 'error',
+                text1: 'Error creating bounty',
+                text2: error.message,
+            });
         }
     });
 }

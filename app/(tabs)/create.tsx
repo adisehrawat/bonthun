@@ -4,6 +4,9 @@ import { Clock, DollarSign, MapPin } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { useApp } from '@/contexts/AppContext';
+import Toast from 'react-native-toast-message';
 
 function parseTimeLimit(input: string): number {
     const regex = /(\d+)\s*(second|minute|hour|day|week)s?/i;
@@ -27,6 +30,7 @@ function parseTimeLimit(input: string): number {
 
 export default function CreateBounty() {
     const createBounty = useCreateBounty();
+    const { refreshBounties } = useApp();
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -62,23 +66,18 @@ export default function CreateBounty() {
                 location: formData.location,
                 time_limit: new BN(parsedTime),
             });
-            Alert.alert(
-                'Success',
-                'Your bounty has been created and posted!',
-                [{
-                    text: 'OK', onPress: () => {
-                        setFormData({
-                            title: '',
-                            description: '',
-                            reward: '',
-                            location: '',
-                            timeLimit: '',
-                        });
-                    }
-                }]
-            );
+            router.push('/');
+            refreshBounties();
+            Toast.show({
+                type: 'success',
+                text1: 'Bounty created successfully',
+            });
         } catch (error: any) {
-            Alert.alert('Error', error.message);
+            Toast.show({
+                type: 'error',
+                text1: 'Error creating bounty',
+                text2: error.message,
+            });
         }
     };
 

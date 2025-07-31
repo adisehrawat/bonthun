@@ -9,25 +9,25 @@ import { Filter, MapPin, UserPlus } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useApp } from '@/contexts/AppContext';
+import { Bounty as OnChainBounty } from '@/types/bounty';
 
 export default function BrowseBounties() {
+    const { bounties, isLoading, refreshBounties } = useApp();
+
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedStatus, setSelectedStatus] = useState<string>('open');
     const [selectedBounty, setSelectedBounty] = useState<Bounty | null>(null);
     const [isModalVisible, setModalVisible] = useState(false);
     const [claimedBounties, setClaimedBounties] = useState<{ [key: string]: string | null }>({});
-    const [refreshing, setRefreshing] = useState(false);
     const { profile, isProfileLoaded } = useProfile();
     const [showProfileModal, setShowProfileModal] = useState(false);
     const router = useRouter();
 
-    const handleRefresh = () => {
-        setRefreshing(true);
-        // Simulate a refresh (you can replace this with real data fetch later)
-        setTimeout(() => {
-            setRefreshing(false);
-        }, 1500);
-    };
+    console.log('bounties total', bounties.length);
+    console.log('bounties', bounties);
+
+
 
     const handlePress = (bounty: Bounty) => {
         setSelectedBounty(bounty);
@@ -35,7 +35,7 @@ export default function BrowseBounties() {
     };
 
 
-    const filteredBounties = mockBounties.filter((bounty) => {
+    const filteredBounties = bounties.filter((bounty) => {
         const matchesSearch =
             bounty.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             bounty.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -101,15 +101,15 @@ export default function BrowseBounties() {
                     <ScrollView style={styles.content}
                         refreshControl={
                             <RefreshControl
-                                refreshing={refreshing}
-                                onRefresh={handleRefresh}
+                                refreshing={isLoading}
+                                onRefresh={refreshBounties}
                                 colors={['#3B82F6']} // Android spinner color
                             />
                         }
                     >
                         <View style={styles.resultsHeader}>
                             <Text style={styles.resultsText}>
-                                {filteredBounties.length} bounties found
+                                {bounties.length} bounties found
                             </Text>
                             <TouchableOpacity style={styles.sortButton}>
                                 <Filter size={16} color="#6B7280" />
@@ -122,6 +122,7 @@ export default function BrowseBounties() {
                                 key={bounty.id}
                                 bounty={bounty}
                                 onPress={() => handlePress(bounty)}
+                                isLoading={isLoading}
                             />
                         ))}
 
@@ -150,6 +151,10 @@ export default function BrowseBounties() {
                 }}
                 onSubmit={(bounty, link) => {
                     setClaimedBounties(prev => ({ ...prev, [bounty.id]: link }));
+                    setModalVisible(false);
+                }}
+                onAward={(bounty, hunterId) => {
+                    console.log(`Awarding bounty ${bounty.id} to hunter ${hunterId}`);
                     setModalVisible(false);
                 }}
             />

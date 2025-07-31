@@ -4,6 +4,8 @@ import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useCreateUserProfile } from '../data/bonthun-data-access';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import Toast from 'react-native-toast-message';
+
 
 
 interface ProfileCreateModalProps {
@@ -41,11 +43,20 @@ const ProfileCreateModal: React.FC<ProfileCreateModalProps> = ({ visible, onClos
         await createUserProfile.mutateAsync({username,email});
         await refreshProfile();
         setSubmitting(false);
+        Toast.show({
+            type: 'success',
+            text1: 'User profile created successfully',
+        });
         onClose();
     }
     catch (err: any){
         setError(err?.message || 'Failed to create profile.');
         setSubmitting(false);
+        Toast.show({
+            type: 'error',
+            text1: 'Error creating profile',
+            text2: err.message,
+        });
     }
     
   };
