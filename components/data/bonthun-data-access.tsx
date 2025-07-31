@@ -30,6 +30,7 @@ const createMobileAnchorWallet = (selectedAccount: any): any => {
 export function useGetProgram() {
     const connection = useConnection();
     const { selectedAccount } = useAuthorization();
+    console.log('[useGetProgram] selectedAccount', selectedAccount);
     const provider = useMemo(() => {
         if (!selectedAccount) return null;
         const wallet = createMobileAnchorWallet(selectedAccount);
