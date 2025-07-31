@@ -1,14 +1,11 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
+use anchor_lang::system_program::Transfer;
 
-declare_id!("9AzEGgnDWQP8zx9CCwe15iAxudmK7U6p1UdVHHqcyvRL");
+declare_id!("2AngWZhK6WtbkuYJQZUiweynLFx4XHueXMN8Wv3eeyC8");
 
 #[program]
-pub mod bonthunanc {
-    
-
-    use anchor_lang::system_program::Transfer;
-
+pub mod bonthunanchor {
     use super::*;
 
     pub fn init_user_profile(

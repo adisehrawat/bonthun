@@ -1,4 +1,4 @@
-import { BONTHUN_PROGRAM_ID, getBonthunProgram } from "@/bonthunanc/src/bonthun-exports";
+import { BONTHUN_PROGRAM_ID, getBonthunProgram } from "@/bonthunanchor/src/bonthunanchor-exports";
 import { useMobileWallet } from '@/components/solana/use-mobile-wallet';
 import { useWalletUi } from '@/components/solana/use-wallet-ui';
 import { AnchorProvider, BN } from '@coral-xyz/anchor';
@@ -94,29 +94,27 @@ export function useCreateUserProfile() {
                     .instruction();
                 console.log('[createUserProfile] instruction build', ix);
 
-                const {
-                    context: { slot: minContextSlot },
-                    value: latestBlockhash,
-                  } = await connection.getLatestBlockhashAndContext()
+                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
                 const messageV0 = new TransactionMessage({
                     payerKey: pubkey,
-                    recentBlockhash: latestBlockhash.blockhash,
+                    recentBlockhash: blockhash,
                     instructions: [ix],
                 }).compileToV0Message();
                 const tx = new VersionedTransaction(messageV0);
                 console.log('[createUserProfile] versioned tx built: ', tx);
-                    const txid = await signAndSendTransaction(tx, minContextSlot);
+                const txid = await signAndSendTransaction(tx, lastValidBlockHeight);
                 console.log('[createUserProfile] tx sent:', txid);
-                console.log(`[createUserProfile] Waiting for transaction confirmation... ${txid}`);
+                console.log('[createUserProfile] Waiting for transaction confirmation...${ txid }');
                 const result = await connection.confirmTransaction({
                     signature: txid,
-                    ...latestBlockhash,
+                    blockhash,
+                    lastValidBlockHeight
                 }, 'confirmed');
 
                 if (result.value.err) {
-                    throw new Error(`Transaction failed: ${JSON.stringify(result.value.err)}`);
+                    throw new Error('Transaction failed: ' + JSON.stringify(result.value.err));
                 }
-                console.log(`[createUserProfile] Transaction confirmed.`);
+                console.log('[createUserProfile] Transaction confirmed.');
                 return txid;
             }
             catch (err: any) {
@@ -157,29 +155,27 @@ export function useEditUserProfile() {
                     .instruction();
                 console.log('[editUserProfile] instruction build', ix);
 
-                const {
-                    context: { slot: minContextSlot },
-                    value: latestBlockhash,
-                  } = await connection.getLatestBlockhashAndContext()
+                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
                 const messageV0 = new TransactionMessage({
                     payerKey: pubkey,
-                    recentBlockhash: latestBlockhash.blockhash,
+                    recentBlockhash: blockhash,
                     instructions: [ix],
                 }).compileToV0Message();
                 const tx = new VersionedTransaction(messageV0);
                 console.log('[editUserProfile] versioned tx built: ', tx);
-                const txid = await signAndSendTransaction(tx, minContextSlot);
+                const txid = await signAndSendTransaction(tx, lastValidBlockHeight);
                 console.log('[editUserProfile] tx sent:', txid);
-                console.log(`[editUserProfile] Waiting for transaction confirmation... ${txid}`);
+                console.log('[editUserProfile] Waiting for transaction confirmation...${ txid }');
                 const result = await connection.confirmTransaction({
                     signature: txid,
-                    ...latestBlockhash,
+                    blockhash,
+                    lastValidBlockHeight
                 }, 'confirmed');
 
                 if (result.value.err) {
-                    throw new Error(`Transaction failed: ${JSON.stringify(result.value.err)}`);
+                    throw new Error('Transaction failed: ' + JSON.stringify(result.value.err));
                 }
-                console.log(`[editUserProfile] Transaction confirmed.`);
+                console.log('[editUserProfile] Transaction confirmed.');
                 return txid;
             }
             catch (err: any) {
@@ -221,30 +217,27 @@ export function useDeleteUserProfile() {
                     .instruction();
                 console.log('[deleteUserProfile] instruction build', ix);
 
-                const {
-                    context: { slot: minContextSlot },
-                    value: latestBlockhash,
-                  } = await connection.getLatestBlockhashAndContext()
+                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
                 const messageV0 = new TransactionMessage({
                     payerKey: pubkey,
-                    recentBlockhash: latestBlockhash.blockhash,
+                    recentBlockhash: blockhash,
                     instructions: [ix],
                 }).compileToV0Message();
                 const tx = new VersionedTransaction(messageV0);
-
                 console.log('[deleteUserProfile] versioned tx built: ', tx);
-                const txid = await signAndSendTransaction(tx, minContextSlot);
+                const txid = await signAndSendTransaction(tx, lastValidBlockHeight);
                 console.log('[deleteUserProfile] tx sent:', txid);
-                console.log(`[deleteUserProfile] Waiting for transaction confirmation... ${txid}`);
+                console.log('[deleteUserProfile] Waiting for transaction confirmation...${ txid }');
                 const result = await connection.confirmTransaction({
                     signature: txid,
-                    ...latestBlockhash,
+                    blockhash,
+                    lastValidBlockHeight
                 }, 'confirmed');
 
                 if (result.value.err) {
-                    throw new Error(`Transaction failed: ${JSON.stringify(result.value.err)}`);
+                    throw new Error('Transaction failed: ' + JSON.stringify(result.value.err));
                 }
-                console.log(`[deleteUserProfile] Transaction confirmed.`);
+                console.log('[deleteUserProfile] Transaction confirmed.');
                 return txid;
             }
             catch (err: any) {
@@ -277,13 +270,15 @@ export function useCreateBounty() {
 
                 const profilePDA = PDA.userProfile(pubkey);
                 const bountyPDA = PDA.bounty(pubkey, title);
+                const rewardInLamports = new BN(reward.toNumber() * 1_000_000_000);
+                console.log('[createBounty] rewardInLamports', rewardInLamports.toString());
                 console.log('[createBounty] bountyPDA', bountyPDA.toString());
                 if (!bonthunProgram) throw new Error('Program not ready');
                 const ix = await bonthunProgram.methods
                     .createBounty(
                         title,
                         description,
-                        reward,
+                        rewardInLamports,
                         location,
                         time_limit
                     )
@@ -296,29 +291,27 @@ export function useCreateBounty() {
                     .instruction();
                 console.log('[createBounty] instruction build', ix);
 
-                const {
-                    context: { slot: minContextSlot },
-                    value: latestBlockhash,
-                  } = await connection.getLatestBlockhashAndContext()
+                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
                 const messageV0 = new TransactionMessage({
                     payerKey: pubkey,
-                    recentBlockhash: latestBlockhash.blockhash,
+                    recentBlockhash: blockhash,
                     instructions: [ix],
                 }).compileToV0Message();
                 const tx = new VersionedTransaction(messageV0);
                 console.log('[createBounty] versioned tx built: ', tx);
-                const txid = await signAndSendTransaction(tx, minContextSlot);
+                const txid = await signAndSendTransaction(tx, lastValidBlockHeight);
                 console.log('[createBounty] tx sent:', txid);
-                console.log(`[createBounty] Waiting for transaction confirmation... ${txid}`);
+                console.log('[createBounty] Waiting for transaction confirmation...${ txid }');
                 const result = await connection.confirmTransaction({
                     signature: txid,
-                    ...latestBlockhash,
+                    blockhash,
+                    lastValidBlockHeight
                 }, 'confirmed');
 
                 if (result.value.err) {
-                    throw new Error(`Transaction failed: ${JSON.stringify(result.value.err)}`);
+                    throw new Error('Transaction failed: ' + JSON.stringify(result.value.err));
                 }
-                console.log(`[createBounty] Transaction confirmed.`);
+                console.log('[createBounty] Transaction confirmed.');
                 return txid;
             }
             catch (err: any) {
@@ -328,7 +321,7 @@ export function useCreateBounty() {
         },
         onSuccess: () => {
             console.log("bounty created successfully");
-            return queryClient.invalidateQueries({ queryKey: ['bounties', account?.publicKey?.toString()] });
+            return queryClient.invalidateQueries({ queryKey: ['bounty', account?.publicKey?.toString()] });
         }
     });
 }

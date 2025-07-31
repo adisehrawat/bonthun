@@ -21,6 +21,7 @@ const ProfileUpdateModal = ({ isVisible, onClose }: ProfileUpdateModalProps) => 
         try {
             await deleteClient.mutateAsync();
             await refreshProfile();
+            clearProfile();
             onClose();
         } catch (e) {
             console.error(e);

@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-bonthunanc = "9AzEGgnDWQP8zx9CCwe15iAxudmK7U6p1UdVHHqcyvRL"
+bonthunanchor = "2AngWZhK6WtbkuYJQZUiweynLFx4XHueXMN8Wv3eeyC8"
 
 [registry]
 url = "https://api.apr.dev"

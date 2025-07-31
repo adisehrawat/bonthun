@@ -1,4 +1,3 @@
-// context/ProfileContext.tsx
 
 import { useConnection } from '@/components/solana/solana-provider';
 import { useAuthorization } from '@/components/solana/use-authorization';
@@ -60,8 +59,8 @@ export const ProfileProvider: React.FC<ProfileProviderProps> = ({ children }) =>
                 success_rate: profileAccount.successRate,
                 bounties_posted: profileAccount.bountiesPosted,
                 total_sol_spent: profileAccount.totalSolSpent,
-                bounties_completed_as_client: profileAccount.bountiesCompletedAsClient,
                 bounties_rewarded: profileAccount.bountiesRewarded,
+                bounties_completed_as_client: profileAccount.bountiesCompletedAsClient,
             });
         } else {
             setProfile(null);

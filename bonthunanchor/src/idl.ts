@@ -1,14 +1,20 @@
-{
-  "address": "9AzEGgnDWQP8zx9CCwe15iAxudmK7U6p1UdVHHqcyvRL",
+/**
+ * Program IDL in camelCase format in order to be used in JS/TS.
+ *
+ * Note that this is only a type helper and is not the actual IDL. The original
+ * IDL can be found at `target/idl/bonthunanchor.json`.
+ */
+export type Bonthunanchor = {
+  "address": "2AngWZhK6WtbkuYJQZUiweynLFx4XHueXMN8Wv3eeyC8",
   "metadata": {
-    "name": "bonthunanc",
+    "name": "bonthunanchor",
     "version": "0.1.0",
     "spec": "0.1.0",
     "description": "Created with Anchor"
   },
   "instructions": [
     {
-      "name": "claim_bounty",
+      "name": "claimBounty",
       "discriminator": [
         225,
         157,
@@ -25,7 +31,7 @@
           "writable": true
         },
         {
-          "name": "hunter_profile",
+          "name": "hunterProfile",
           "writable": true,
           "pda": {
             "seeds": [
@@ -54,7 +60,7 @@
       "args": []
     },
     {
-      "name": "create_bounty",
+      "name": "createBounty",
       "discriminator": [
         122,
         90,
@@ -120,7 +126,7 @@
           "signer": true
         },
         {
-          "name": "system_program",
+          "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
       ],
@@ -142,13 +148,13 @@
           "type": "string"
         },
         {
-          "name": "time_limit",
+          "name": "timeLimit",
           "type": "i64"
         }
       ]
     },
     {
-      "name": "delete_profile",
+      "name": "deleteProfile",
       "discriminator": [
         213,
         96,
@@ -187,14 +193,14 @@
           "signer": true
         },
         {
-          "name": "system_program",
+          "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
     },
     {
-      "name": "edit_profile",
+      "name": "editProfile",
       "discriminator": [
         149,
         232,
@@ -236,7 +242,7 @@
           ]
         },
         {
-          "name": "system_program",
+          "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
       ],
@@ -252,7 +258,7 @@
       ]
     },
     {
-      "name": "init_user_profile",
+      "name": "initUserProfile",
       "discriminator": [
         148,
         35,
@@ -291,7 +297,7 @@
           "signer": true
         },
         {
-          "name": "system_program",
+          "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
       ],
@@ -305,17 +311,17 @@
           "type": "string"
         },
         {
-          "name": "is_hunter",
+          "name": "isHunter",
           "type": "bool"
         },
         {
-          "name": "is_client",
+          "name": "isClient",
           "type": "bool"
         }
       ]
     },
     {
-      "name": "select_winner",
+      "name": "selectWinner",
       "discriminator": [
         119,
         66,
@@ -332,7 +338,7 @@
           "writable": true
         },
         {
-          "name": "client_profile",
+          "name": "clientProfile",
           "writable": true,
           "pda": {
             "seeds": [
@@ -353,7 +359,7 @@
           }
         },
         {
-          "name": "hunter_profile",
+          "name": "hunterProfile",
           "writable": true,
           "pda": {
             "seeds": [
@@ -385,14 +391,14 @@
           ]
         },
         {
-          "name": "system_program",
+          "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
     },
     {
-      "name": "submit_work",
+      "name": "submitWork",
       "discriminator": [
         158,
         80,
@@ -445,13 +451,13 @@
           "signer": true
         },
         {
-          "name": "system_program",
+          "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
         {
-          "name": "submission_link",
+          "name": "submissionLink",
           "type": "string"
         }
       ]
@@ -459,7 +465,7 @@
   ],
   "accounts": [
     {
-      "name": "Bounty",
+      "name": "bounty",
       "discriminator": [
         237,
         16,
@@ -472,7 +478,7 @@
       ]
     },
     {
-      "name": "Submission",
+      "name": "submission",
       "discriminator": [
         58,
         194,
@@ -485,7 +491,7 @@
       ]
     },
     {
-      "name": "UserProfile",
+      "name": "userProfile",
       "discriminator": [
         32,
         37,
@@ -501,83 +507,83 @@
   "errors": [
     {
       "code": 6000,
-      "name": "StringTooLong",
+      "name": "stringTooLong",
       "msg": "String too long for allocated space"
     },
     {
       "code": 6001,
-      "name": "InvalidTimeLimit",
+      "name": "invalidTimeLimit",
       "msg": "Invalid time limit"
     },
     {
       "code": 6002,
-      "name": "InvalidReward",
+      "name": "invalidReward",
       "msg": "Invalid reward amount"
     },
     {
       "code": 6003,
-      "name": "NotAClient",
+      "name": "notAClient",
       "msg": "Only client role can perform this action"
     },
     {
       "code": 6004,
-      "name": "NotAHunter",
+      "name": "notAHunter",
       "msg": "Only hunter role can perform this action"
     },
     {
       "code": 6005,
-      "name": "Unauthorized",
-      "msg": "Unauthorized"
+      "name": "unauthorized",
+      "msg": "unauthorized"
     },
     {
       "code": 6006,
-      "name": "InvalidStatus",
+      "name": "invalidStatus",
       "msg": "Invalid status transition or status"
     },
     {
       "code": 6007,
-      "name": "SubmissionMismatch",
+      "name": "submissionMismatch",
       "msg": "Submission does not belong to bounty or hunter mismatch"
     },
     {
       "code": 6008,
-      "name": "PastDeadline",
+      "name": "pastDeadline",
       "msg": "Submission past the deadline"
     },
     {
       "code": 6009,
-      "name": "MathOverflow",
+      "name": "mathOverflow",
       "msg": "Math overflow"
     },
     {
       "code": 6010,
-      "name": "InsufficientEscrow",
+      "name": "insufficientEscrow",
       "msg": "Escrow does not have enough lamports"
     },
     {
       "code": 6011,
-      "name": "InvalidIndex",
+      "name": "invalidIndex",
       "msg": "Invalid index for PDA seeds"
     },
     {
       "code": 6012,
-      "name": "SeedIndexUnavailable",
+      "name": "seedIndexUnavailable",
       "msg": "Seed index unavailable (store it in the Bounty account)"
     },
     {
       "code": 6013,
-      "name": "BountyNotOpen",
+      "name": "bountyNotOpen",
       "msg": "bounty open opened"
     },
     {
       "code": 6014,
-      "name": "BountyNotClaimed",
+      "name": "bountyNotClaimed",
       "msg": "Bounty has not been claimed."
     }
   ],
   "types": [
     {
-      "name": "Bounty",
+      "name": "bounty",
       "type": {
         "kind": "struct",
         "fields": [
@@ -602,14 +608,14 @@
             "type": "string"
           },
           {
-            "name": "time_limit",
+            "name": "timeLimit",
             "type": "i64"
           },
           {
             "name": "status",
             "type": {
               "defined": {
-                "name": "BountyStatus"
+                "name": "bountyStatus"
               }
             }
           },
@@ -620,7 +626,7 @@
             }
           },
           {
-            "name": "created_at",
+            "name": "createdAt",
             "type": "i64"
           },
           {
@@ -631,24 +637,24 @@
       }
     },
     {
-      "name": "BountyStatus",
+      "name": "bountyStatus",
       "type": {
         "kind": "enum",
         "variants": [
           {
-            "name": "Open"
+            "name": "open"
           },
           {
-            "name": "Claimed"
+            "name": "claimed"
           },
           {
-            "name": "Completed"
+            "name": "completed"
           }
         ]
       }
     },
     {
-      "name": "Submission",
+      "name": "submission",
       "type": {
         "kind": "struct",
         "fields": [
@@ -661,11 +667,11 @@
             "type": "pubkey"
           },
           {
-            "name": "submission_link",
+            "name": "submissionLink",
             "type": "string"
           },
           {
-            "name": "submitted_at",
+            "name": "submittedAt",
             "type": "i64"
           },
           {
@@ -676,7 +682,7 @@
       }
     },
     {
-      "name": "UserProfile",
+      "name": "userProfile",
       "type": {
         "kind": "struct",
         "fields": [
@@ -697,43 +703,43 @@
             "type": "string"
           },
           {
-            "name": "is_hunter",
+            "name": "isHunter",
             "type": "bool"
           },
           {
-            "name": "is_client",
+            "name": "isClient",
             "type": "bool"
           },
           {
-            "name": "bounties_completed",
+            "name": "bountiesCompleted",
             "type": "u64"
           },
           {
-            "name": "bounties_applied",
+            "name": "bountiesApplied",
             "type": "u64"
           },
           {
-            "name": "total_sol_earned",
+            "name": "totalSolEarned",
             "type": "u64"
           },
           {
-            "name": "success_rate",
+            "name": "successRate",
             "type": "f64"
           },
           {
-            "name": "bounties_posted",
+            "name": "bountiesPosted",
             "type": "u64"
           },
           {
-            "name": "total_sol_spent",
+            "name": "totalSolSpent",
             "type": "u64"
           },
           {
-            "name": "bounties_completed_as_client",
+            "name": "bountiesCompletedAsClient",
             "type": "u64"
           },
           {
-            "name": "bounties_rewarded",
+            "name": "bountiesRewarded",
             "type": "u64"
           },
           {
@@ -744,4 +750,4 @@
       }
     }
   ]
-}
+};

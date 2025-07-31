@@ -1,4 +1,4 @@
-import { getBonthunProgram } from "@/bonthunanc/src/bonthun-exports";
+import { getBonthunProgram } from "@/bonthunanchor/src/bonthunanchor-exports";
 import { AnchorProvider,BN } from '@coral-xyz/anchor';
 import { PublicKey } from '@solana/web3.js';
 
@@ -16,8 +16,8 @@ export interface OnChainProfile {
     success_rate: number,
     bounties_posted: BN,
     total_sol_spent: BN,
-    bounties_completed_as_client: BN,
     bounties_rewarded: BN,
+    bounties_completed_as_client: BN,
 }
 
 export async function fetchProfile(owner: PublicKey,provider: AnchorProvider) {
