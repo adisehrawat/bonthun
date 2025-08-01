@@ -8,7 +8,7 @@ export function AccountUiBalance({ address }: { address: PublicKey }) {
   const query = useGetBalance({ address })
 
   return (
-    <View>
+    <View style={{ alignItems: 'center', gap: 4, width: '100%', paddingHorizontal: 16, paddingTop: 16 }}>
       <AppText type="title">
         {query.isLoading ? <ActivityIndicator /> : query.data ? lamportsToSol(query.data) : '0'} SOL
       </AppText>

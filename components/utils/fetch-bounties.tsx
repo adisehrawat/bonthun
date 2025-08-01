@@ -1,4 +1,4 @@
-import { Bounty } from '@/types/bounty';
+import { Bounty, Submission } from '@/types/bounty';
 import { PublicKey } from '@solana/web3.js';
 import { useQuery } from '@tanstack/react-query';
 import { PDA, useGetProgram } from '../data/bonthun-data-access';
@@ -22,7 +22,23 @@ export function useGetBounties() {
             }
             try {
                 const rawBounties = await program.account.bounty.all();
-                console.log('[fetchBounties] bounties fetched', rawBounties.length);
+
+                const submissions = await program.account.submission.all();
+
+                const submissionMap: { [key: string]: { hunter: string, submission: string, selected: boolean, submittedAt: number }[] } = {};
+
+                submissions.forEach(s => {
+                    const bountyId = s.account.bounty.toString();
+                    if (!submissionMap[bountyId]) submissionMap[bountyId] = [];
+                
+                    submissionMap[bountyId].push({
+                        hunter: s.account.hunter.toString(),
+                        submission: s.account.submissionLink,
+                        selected: s.account.selected,
+                        submittedAt: s.account.submittedAt.toNumber(),
+                    });
+                });
+
 
                 const clientSet = new Set(rawBounties.map(b => b.account.creator.toString()));
                 const clients = Array.from(clientSet);
@@ -54,8 +70,6 @@ export function useGetBounties() {
                     })
                 );
 
-                console.log('clientProfiles:', clientProfiles);
-                console.log('hunterProfiles:', hunterProfiles);
 
                 const profileMap = Object.fromEntries(
                     clientProfiles.map(p => [p.pubkey, { username: p.username, avatar: p.avatar }])
@@ -64,10 +78,6 @@ export function useGetBounties() {
                 const hunterMap = Object.fromEntries(
                     hunterProfiles.map(p => [p.pubkey, { username: p.username, avatar: p.avatar }])
                 );
-
-                console.log('profileMap:', profileMap);
-                console.log('hunterMap:', hunterMap);
-
 
 
                 return rawBounties.map(({account, publicKey}) => {
@@ -93,7 +103,25 @@ export function useGetBounties() {
                             name: hunter.username,
                             avatar: hunter.avatar,
                         } : null, 
-                        
+                        submissions: submissionMap[publicKey.toString()]?.map(sub => ({
+                            id: sub.submission,
+                            hunter: hunterProfiles.find(p => p.pubkey === sub.hunter) || {
+                                id: sub.hunter,
+                                name: 'Anonymous',
+                                email: '',
+                                avatar: '',
+                                role: 'hunter',
+                                totalEarned: 0,
+                                totalSpent: 0,
+                                completedBounties: 0,
+                                successRate: 0,
+                                bountiesRewarded: 0,
+                                rating: 0
+                            },
+                            submissionLink: sub.submission,
+                            selected: sub.selected,
+                            submittedAt: sub.submittedAt,
+                        })) || [],
                         bump: account.bump,
                     } as Bounty;
                 });

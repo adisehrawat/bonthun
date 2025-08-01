@@ -7,11 +7,12 @@ import { CircleCheck as CheckCircle, Clock, Eye, TrendingUp } from 'lucide-react
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useProfile } from '@/contexts/ProfileContext';
 export default function MyBounties() {
           const [activeTab, setActiveTab] = useState<'claimed' | 'completed' | 'posted'>('claimed');
     const { data: bounties, isLoading } = useGetBounties();
     const { selectedAccount } = useAuthorization();
-
+    const { profile } = useProfile();
     const claimedBounties = (bounties ?? []).filter(bounty =>
         bounty.status === 'claimed' && bounty.hunter?.id === selectedAccount?.publicKey.toString()
     );
@@ -47,10 +48,10 @@ export default function MyBounties() {
   };
 
     const stats = {
-    claimed: claimedBounties.length,
-    completed: completedBounties.length,
-    totalEarned: 650,
-    successRate: 94,
+    claimed: profile?.bountiesCompleted.toNumber() ?? 0,
+    completed: profile?.bountiesCompletedAsClient.toNumber() ?? 0,
+    totalEarned: profile?.totalSolEarned.toNumber() ?? 0,
+    successRate: profile?.successRate ?? 0,
   };
 
   return (
@@ -71,7 +72,7 @@ export default function MyBounties() {
           </View>
           <View style={[styles.statCard, styles.statCardPurple]}>
             <Text style={styles.statLabel}>Earned</Text>
-            <Text style={styles.statValuePurple}>${stats.totalEarned}</Text>
+            <Text style={styles.statValuePurple}>{stats.totalEarned} SOL</Text>
           </View>
         </View>
 
@@ -148,7 +149,7 @@ export default function MyBounties() {
                 isClaimed={!!(selectedBounty && claimedBountiesMap[selectedBounty.id] !== undefined)}
         hasSubmitted={!!(selectedBounty && claimedBountiesMap[selectedBounty.id])}
         claimedBounties={claimedBountiesMap}
-        onClaim={(bounty) => {
+        onClaim={(bounty: Bounty) => {
           setClaimedBountiesMap(prev => ({ ...prev, [bounty.id]: null }));
           setModalVisible(false);
         }}
@@ -158,7 +159,6 @@ export default function MyBounties() {
         }}
         isMyPost={activeTab === 'posted'}
         onAward={(bounty, hunterId) => {
-          console.log(`Awarding bounty ${bounty.id} to hunter ${hunterId}`);
           setModalVisible(false);
         }}
       />

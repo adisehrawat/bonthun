@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/bonthunanchor.json`.
  */
 export type Bonthunanchor = {
-  "address": "2AngWZhK6WtbkuYJQZUiweynLFx4XHueXMN8Wv3eeyC8",
+  "address": "ASDBLcyRSj8bWcQNFiPBJMtDLkWmWytsbYrC7B6RJ81M",
   "metadata": {
     "name": "bonthunanchor",
     "version": "0.1.0",
@@ -55,6 +55,10 @@ export type Bonthunanchor = {
           "name": "hunter",
           "writable": true,
           "signer": true
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
@@ -677,6 +681,10 @@ export type Bonthunanchor = {
           {
             "name": "selected",
             "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
           }
         ]
       }

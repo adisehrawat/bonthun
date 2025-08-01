@@ -1,5 +1,5 @@
 {
-  "address": "2AngWZhK6WtbkuYJQZUiweynLFx4XHueXMN8Wv3eeyC8",
+  "address": "ASDBLcyRSj8bWcQNFiPBJMtDLkWmWytsbYrC7B6RJ81M",
   "metadata": {
     "name": "bonthunanchor",
     "version": "0.1.0",
@@ -49,6 +49,10 @@
           "name": "hunter",
           "writable": true,
           "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
@@ -671,6 +675,10 @@
           {
             "name": "selected",
             "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
           }
         ]
       }

@@ -4,9 +4,13 @@ import React, { useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Bounty } from '../../types/bounty';
 import { ellipsify } from '../../utils/ellipsify';
-import { PDA } from '../data/bonthun-data-access';
+import { PDA, useClaimBounty, useSubmitToBounty, useSelectWinner } from '../data/bonthun-data-access';
 import { useAuthorization } from '../solana/use-authorization';
 import { Avatar } from '../ui/Avatar';
+import { useApp } from '@/contexts/AppContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import Toast from 'react-native-toast-message';
+import { router } from 'expo-router';
 
 interface BountyDetailsModalProps {
     visible: boolean;
@@ -28,12 +32,133 @@ export default function BountyDetailsModal({ visible,
     onClaim,
     onSubmit,
     hasSubmitted,
-        isMyPost,
+    isMyPost,
     onAward,
     claimedBounties, }: BountyDetailsModalProps) {
-        const { selectedAccount } = useAuthorization();
+    const claimBounty = useClaimBounty();
+    const submitToBounty = useSubmitToBounty();
+    const selectWinner = useSelectWinner();
+    const { refreshBounties } = useApp();
+    const { refreshProfile } = useProfile();
+    const { selectedAccount } = useAuthorization();
     const [githubLink, setGithubLink] = useState('');
+    const [submitting, setSubmitting] = useState(false);
     if (!bounty) return null;
+
+
+    const handleClaimBounty = async () => {
+        if (!bounty) return;
+        if (bounty.status === 'claimed' || bounty.status === 'completed') {
+            Toast.show({
+                type: 'error',
+                text1: 'Bounty already claimed or completed',
+            });
+            return;
+        }
+        if (bounty.client.id === selectedAccount?.publicKey.toString()) {
+            Toast.show({
+                type: 'error',
+                text1: 'You cannot claim your own bounty',
+            });
+            return;
+        }
+        setSubmitting(true);
+        try {
+            await claimBounty.mutateAsync({ bountyPDA: new PublicKey(bounty.id) });
+            await refreshProfile();
+            await refreshBounties();
+            Toast.show({
+                type: 'success',
+                text1: 'Bounty claimed successfully',
+            });
+            onClose();
+            setSubmitting(false);
+            router.push('/mybounties');
+        }
+        catch (err: any) {
+            Toast.show({
+                type: 'error',
+                text1: 'Error claiming bounty',
+                text2: err.message,
+            });
+        }
+    }
+
+    const handleSubmitToBounty = async () => {
+        if (!bounty) return;
+        if (bounty.status !== 'claimed') {
+            Toast.show({
+                type: 'error',
+                text1: 'Bounty not claimed',
+            });
+            return;
+        }
+        if (bounty.client.id === selectedAccount?.publicKey.toString()) {
+            Toast.show({
+                type: 'error',
+                text1: 'You cannot submit to your own bounty',
+            });
+            return;
+        }
+        setSubmitting(true);
+        try {
+            await submitToBounty.mutateAsync({ bountyPDA: new PublicKey(bounty.id), submissionLink: githubLink });
+            await refreshProfile();
+            await refreshBounties();
+            Toast.show({
+                type: 'success',
+                text1: 'Submission submitted successfully',
+            });
+            onClose();
+            setSubmitting(false);
+        }
+        catch (err: any) {
+            Toast.show({
+                type: 'error',
+                text1: 'Error submitting to bounty',
+                text2: err.message,
+            });
+        }
+    }
+
+    const handleSelectWinner = async (bounty: Bounty, hunterId: string) => {
+
+        if (!bounty) return;
+        if (bounty.status !== 'claimed') {
+            Toast.show({
+                type: 'error',
+                text1: 'Bounty not claimed',
+            });
+            return;
+        }
+        if (bounty.client.id !== selectedAccount?.publicKey.toString()) {
+            Toast.show({
+                type: 'error',
+                text1: 'You cannot select a winner for your own bounty',
+            });
+            return;
+        }
+        setSubmitting(true);
+        try {
+            await selectWinner.mutateAsync({ bountyPDA: new PublicKey(bounty.id), winner: new PublicKey(hunterId) });
+            await refreshProfile();
+            await refreshBounties();
+            Toast.show({
+                type: 'success',
+                text1: 'Winner selected successfully',
+            });
+            onClose();
+            setSubmitting(false);
+        }
+        catch (err: any) {
+            Toast.show({
+                type: 'error',
+                text1: 'Error selecting winner',
+                text2: err.message,
+            });
+        }
+    }
+
 
     const getTimeLeft = (timeLimit: number) => {
         const timeLeft = timeLimit - Date.now() / 1000;
@@ -45,10 +170,11 @@ export default function BountyDetailsModal({ visible,
         return `${hours}h left`;
     };
 
-        const submissions = [
-        { id: '1', hunter: 'Hunter 1', link: 'https://github.com/hunter1/submission' },
-        { id: '2', hunter: 'Hunter 2', link: 'https://github.com/hunter2/submission' },
-    ];
+    const submissions = bounty.submissions?.map(submission => ({
+        id: submission.id,
+        hunter: bounty.hunter,
+        link: submission.submissionLink,
+    }));
 
     return (
         <Modal visible={visible} animationType="slide" transparent={false}>
@@ -68,7 +194,7 @@ export default function BountyDetailsModal({ visible,
 
                     {/* Reward */}
                     <View style={styles.rewardContainer}>
-                        <Text style={styles.rewardText}>Reward: {bounty.reward/1000000000} SOL</Text>
+                        <Text style={styles.rewardText}>Reward: {bounty.reward / 1000000000} SOL</Text>
                     </View>
 
                     {/* Client */}
@@ -101,39 +227,57 @@ export default function BountyDetailsModal({ visible,
                         <Text style={styles.metaValue}>{getTimeLeft(bounty.timeLimit)}</Text>
                     </View>
 
-                    {isMyPost && (
+                    {isMyPost && bounty.submissions && bounty.submissions.length > 0 && bounty.status === 'claimed' && bounty.client.id === selectedAccount?.publicKey.toString() && (
                         <View style={styles.submissionsContainer}>
                             <Text style={styles.submissionsTitle}>Submissions</Text>
-                            {submissions.map(submission => (
+                            {submissions?.map(submission => (
                                 <View key={submission.id} style={styles.submissionCard}>
-                                    <Text style={styles.submissionHunter}>{submission.hunter}</Text>
+                                    <Text style={styles.submissionHunter}>{submission.hunter.name}</Text>
                                     <Text style={styles.submissionLink}>{submission.link}</Text>
-                                    <TouchableOpacity style={styles.awardButton} onPress={() => onAward(bounty, submission.id)}>
-                                        <Text style={styles.awardButtonText}>Award Bounty</Text>
+                                    <TouchableOpacity style={styles.awardButton} onPress={() => handleSelectWinner(bounty, bounty.hunter.id)} disabled={submitting}> 
+                                        <Text style={styles.awardButtonText}>{submitting ? 'Selecting...' : 'Award Bounty'}</Text>
                                     </TouchableOpacity>
                                 </View>
                             ))}
                         </View>
                     )}
                 </ScrollView>
-                {!isClaimed && bounty.client.id !== selectedAccount?.publicKey.toString() && (
-                    <TouchableOpacity style={styles.claimButton} onPress={() => onClaim(bounty)}>
-                        <Text style={styles.claimButtonText}>Claim Bounty</Text>
+                {bounty.status === 'open' && bounty.client.id !== selectedAccount?.publicKey.toString() && (
+                    <TouchableOpacity
+                        style={styles.button}
+                        onPress={handleClaimBounty}
+                        disabled={submitting}
+                    >
+                        <Text style={styles.claimButtonText}>
+                            {submitting ? 'Claiming...' : 'Claim Bounty'}
+                        </Text>
                     </TouchableOpacity>
                 )}
-                {isClaimed && !hasSubmitted && (
+                {bounty.status === 'claimed' && bounty.client.id !== selectedAccount?.publicKey.toString() && !hasSubmitted && (
                     <>
-                        <TextInput
-                            placeholder="Enter GitHub submission link"
-                            value={githubLink}
-                            onChangeText={setGithubLink}
-                        />
-                        <TouchableOpacity onPress={() => onSubmit(bounty, githubLink)}>
-                            <Text style={styles.claimButtonText}>Submit Work</Text>
-                        </TouchableOpacity>
-                    </>
+                    <TextInput
+                      placeholder="Enter GitHub submission link"
+                      value={githubLink}
+                      onChangeText={setGithubLink}
+                      style={styles.textInput}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="url"
+                    />
+                  
+                    <TouchableOpacity
+                      style={[
+                        styles.button,
+                        !githubLink.trim() && styles.disabledButton,
+                      ]}
+                      onPress={handleSubmitToBounty}
+                      disabled={!githubLink.trim() || submitting}
+                    >
+                      <Text style={styles.submitButtonText}>{submitting ? 'Submitting...' : 'Submit Work'}</Text>
+                    </TouchableOpacity>
+                  </>
                 )}
-                {isClaimed && hasSubmitted && (
+                {bounty.status === 'claimed' && bounty.client.id === selectedAccount?.publicKey.toString() && hasSubmitted && (
                     <Text>
                         Submitted: {claimedBounties[bounty.id]}
                     </Text>
@@ -214,7 +358,7 @@ const styles = StyleSheet.create({
     metaValue: {
         color: '#111827',
     },
-    claimButton: {
+    button: {
         backgroundColor: '#3B82F6',
         paddingVertical: 16,
         borderRadius: 12,
@@ -258,4 +402,27 @@ const styles = StyleSheet.create({
         color: 'white',
         fontWeight: '600',
     },
+    textInput: {
+        backgroundColor: 'white',
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        borderRadius: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        color: '#111827',
+    },
+      submitButton: {
+        backgroundColor: '#4CAF50',
+        paddingVertical: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+      },
+      submitButtonText: {
+        color: 'white',
+        fontWeight: '600',
+        fontSize: 16,
+      },
+      disabledButton: {
+        backgroundColor: '#3B82F6',
+      },
 });

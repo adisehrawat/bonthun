@@ -34,7 +34,7 @@ export function useGetProgram() {
     const provider = useMemo(() => {
         if (!selectedAccount) return null;
         const wallet = createMobileAnchorWallet(selectedAccount);
-        return new AnchorProvider(connection, wallet, {
+        return new AnchorProvider(connection as any, wallet, {
             preflightCommitment: "confirmed",
             commitment: "processed",
         });
@@ -53,6 +53,8 @@ export const PDA = {
         PublicKey.findProgramAddressSync([Buffer.from('user'), owner.toBuffer()], program_id)[0],
     bounty: (owner: PublicKey, title: string) =>
         PublicKey.findProgramAddressSync([Buffer.from('bounty'), owner.toBuffer(), Buffer.from(title)], program_id)[0],
+    submission: (bounty: PublicKey, hunter: PublicKey) =>
+        PublicKey.findProgramAddressSync([Buffer.from('submission'), bounty.toBuffer(), hunter.toBuffer()], program_id)[0],
 }
 // user profile
 interface createUserProfile {
@@ -83,7 +85,6 @@ export function useCreateUserProfile() {
                 if (!pubkey) throw new Error("No public key");
 
                 const profilePDA = PDA.userProfile(pubkey);
-                console.log('[createUserProfile] profilePDA', profilePDA.toString());
                 if (!bonthunProgram) throw new Error('Program not ready');
                 const ix = await bonthunProgram.methods
                     .initUserProfile(username, email, true, true)
@@ -93,7 +94,6 @@ export function useCreateUserProfile() {
                         systemProgram: SystemProgram.programId,
                     })
                     .instruction();
-                console.log('[createUserProfile] instruction build', ix);
 
                 const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
                 const messageV0 = new TransactionMessage({
@@ -102,10 +102,7 @@ export function useCreateUserProfile() {
                     instructions: [ix],
                 }).compileToV0Message();
                 const tx = new VersionedTransaction(messageV0);
-                console.log('[createUserProfile] versioned tx built: ', tx);
                 const txid = await signAndSendTransaction(tx, lastValidBlockHeight);
-                console.log('[createUserProfile] tx sent:', txid);
-                console.log('[createUserProfile] Waiting for transaction confirmation...${ txid }');
                 const result = await connection.confirmTransaction({
                     signature: txid,
                     blockhash,
@@ -115,7 +112,6 @@ export function useCreateUserProfile() {
                 if (result.value.err) {
                     throw new Error('Transaction failed: ' + JSON.stringify(result.value.err));
                 }
-                console.log('[createUserProfile] Transaction confirmed.');
                 return txid;
             }
             catch (err: any) {
@@ -154,7 +150,6 @@ export function useEditUserProfile() {
                 if (!pubkey) throw new Error("No public key");
 
                 const profilePDA = PDA.userProfile(pubkey);
-                console.log('[editUserProfile] profilePDA', profilePDA.toString());
                 if (!bonthunProgram) throw new Error('Program not ready');
                 const ix = await bonthunProgram.methods
                     .editProfile(username, email)
@@ -164,7 +159,6 @@ export function useEditUserProfile() {
                         systemProgram: SystemProgram.programId,
                     })
                     .instruction();
-                console.log('[editUserProfile] instruction build', ix);
 
                 const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
                 const messageV0 = new TransactionMessage({
@@ -173,10 +167,7 @@ export function useEditUserProfile() {
                     instructions: [ix],
                 }).compileToV0Message();
                 const tx = new VersionedTransaction(messageV0);
-                console.log('[editUserProfile] versioned tx built: ', tx);
                 const txid = await signAndSendTransaction(tx, lastValidBlockHeight);
-                console.log('[editUserProfile] tx sent:', txid);
-                console.log('[editUserProfile] Waiting for transaction confirmation...${ txid }');
                 const result = await connection.confirmTransaction({
                     signature: txid,
                     blockhash,
@@ -186,7 +177,6 @@ export function useEditUserProfile() {
                 if (result.value.err) {
                     throw new Error('Transaction failed: ' + JSON.stringify(result.value.err));
                 }
-                console.log('[editUserProfile] Transaction confirmed.');
                 return txid;
             }
             catch (err: any) {
@@ -343,6 +333,204 @@ export function useCreateBounty() {
             Toast.show({
                 type: 'error',
                 text1: 'Error creating bounty',
+                text2: error.message,
+            });
+        }
+    });
+}
+
+export function useClaimBounty() {
+    const connection = useConnection();
+    const bonthunProgram = useGetProgram();
+    const { account } = useWalletUi();
+    const { signAndSendTransaction } = useMobileWallet();
+    const queryClient = useQueryClient();
+
+    return useMutation<string, Error, { bountyPDA: PublicKey }>({
+        mutationKey: ['claim-bounty'],
+        mutationFn: async ({ bountyPDA }) => {
+            try {
+                let pubkey = account?.publicKey;
+                if (!pubkey) throw new Error("No public key");
+                const hunterProfilePDA = PDA.userProfile(pubkey);
+                if (!bonthunProgram) throw new Error('Program not ready');
+                const ix = await bonthunProgram.methods
+                    .claimBounty()
+                    .accountsStrict({
+                        bounty: bountyPDA,
+                        hunterProfile: hunterProfilePDA,
+                        hunter: pubkey,
+                        systemProgram: SystemProgram.programId,
+                    })
+                    .instruction();
+
+                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+                const messageV0 = new TransactionMessage({
+                    payerKey: pubkey,
+                    recentBlockhash: blockhash,
+                    instructions: [ix],
+                }).compileToV0Message();
+                const tx = new VersionedTransaction(messageV0);
+                const txid = await signAndSendTransaction(tx, lastValidBlockHeight);
+                const result = await connection.confirmTransaction({
+                    signature: txid,
+                    blockhash,
+                    lastValidBlockHeight
+                }, 'confirmed');
+
+                if (result.value.err) {
+                    throw new Error('Transaction failed: ' + JSON.stringify(result.value.err));
+                }
+                return txid;
+            }
+            catch (err: any) {
+                throw err;
+            }
+        },
+        onSuccess: () => {
+            Toast.show({
+                type: 'success',
+                text1: 'Applied for bounty successfully',
+            });
+            return queryClient.invalidateQueries({ queryKey: ['bounty', account?.publicKey?.toString()] });
+        },
+        onError: (error: Error) => {
+            Toast.show({
+                type: 'error',
+                text1: 'Error applying for bounty',
+                text2: error.message,
+            });
+        }
+    });
+}
+
+export function useSubmitToBounty() {
+    const connection = useConnection();
+    const bonthunProgram = useGetProgram();
+    const { account } = useWalletUi();
+    const { signAndSendTransaction } = useMobileWallet();
+    const queryClient = useQueryClient();
+
+    return useMutation<string, Error, { bountyPDA: PublicKey, submissionLink: string }>({
+        mutationKey: ['submit-to-bounty'],
+        mutationFn: async ({ bountyPDA, submissionLink }) => {
+            try {
+                let pubkey = account?.publicKey;
+                if (!pubkey) throw new Error("No public key");
+                const submissionPDA = PDA.submission(bountyPDA, pubkey);
+                if (!bonthunProgram) throw new Error('Program not ready');
+                const ix = await bonthunProgram.methods
+                    .submitWork(submissionLink)
+                    .accountsStrict({
+                        submission: submissionPDA,
+                        bounty: bountyPDA,
+                        hunter: pubkey,
+                        systemProgram: SystemProgram.programId,
+                    })
+                    .instruction();
+
+                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+                const messageV0 = new TransactionMessage({
+                    payerKey: pubkey,
+                    recentBlockhash: blockhash,
+                    instructions: [ix],
+                }).compileToV0Message();
+                const tx = new VersionedTransaction(messageV0);
+                const txid = await signAndSendTransaction(tx, lastValidBlockHeight);
+                const result = await connection.confirmTransaction({
+                    signature: txid,
+                    blockhash,
+                    lastValidBlockHeight
+                }, 'confirmed');
+
+                if (result.value.err) {
+                    throw new Error('Transaction failed: ' + JSON.stringify(result.value.err));
+                }
+                return txid;
+            }
+            catch (err: any) {
+                throw err;
+            }
+        },
+        onSuccess: () => {
+            Toast.show({
+                type: 'success',
+                text1: 'Submitted to bounty successfully',
+            });
+            return queryClient.invalidateQueries({ queryKey: ['bounty', account?.publicKey?.toString()] });
+        },
+        onError: (error: Error) => {
+            Toast.show({
+                type: 'error',
+                text1: 'Error submitting to bounty',
+                text2: error.message,
+            });
+        }
+    });
+}
+
+export function useSelectWinner() {
+    const connection = useConnection();
+    const bonthunProgram = useGetProgram();
+    const { account } = useWalletUi();
+    const { signAndSendTransaction } = useMobileWallet();
+    const queryClient = useQueryClient();
+
+    return useMutation<string, Error, { bountyPDA: PublicKey, winner: PublicKey }>({
+        mutationKey: ['select-winner'],
+        mutationFn: async ({ bountyPDA, winner }) => {
+            try {
+                let pubkey = account?.publicKey;
+                if (!pubkey) throw new Error("No public key");
+                const clientProfilePDA = PDA.userProfile(pubkey);
+                const hunterProfilePDA = PDA.userProfile(winner);
+                if (!bonthunProgram) throw new Error('Program not ready');
+                const ix = await bonthunProgram.methods
+                    .selectWinner()
+                    .accountsStrict({
+                        bounty: bountyPDA,
+                        clientProfile: clientProfilePDA,
+                        hunterProfile: hunterProfilePDA,
+                        winner,
+                        creator: pubkey,
+                        systemProgram: SystemProgram.programId,
+                    })
+                    .instruction();
+
+                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+                const messageV0 = new TransactionMessage({
+                    payerKey: pubkey,
+                    recentBlockhash: blockhash,
+                    instructions: [ix],
+                }).compileToV0Message();
+                const tx = new VersionedTransaction(messageV0);
+                const txid = await signAndSendTransaction(tx, lastValidBlockHeight);
+                const result = await connection.confirmTransaction({
+                    signature: txid,
+                    blockhash,
+                    lastValidBlockHeight
+                }, 'confirmed');
+
+                if (result.value.err) {
+                    throw new Error('Transaction failed: ' + JSON.stringify(result.value.err));
+                }
+                return txid;
+            }
+            catch (err: any) {
+                throw err;
+            }
+        },
+        onSuccess: () => {
+            Toast.show({
+                type: 'success',
+                text1: 'Winner selected successfully',
+            });
+            return queryClient.invalidateQueries({ queryKey: ['bounty', account?.publicKey?.toString()] });
+        },
+        onError: (error: Error) => {
+            Toast.show({
+                type: 'error',
+                text1: 'Error selecting winner',
                 text2: error.message,
             });
         }

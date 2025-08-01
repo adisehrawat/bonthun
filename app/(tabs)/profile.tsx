@@ -66,26 +66,15 @@ export default function ProfileScreen() {
             </SafeAreaView>
         );
     }
-
-    console.log('progile bounties completed', profile?.bounties_completed.toString());
-    console.log('progile bounties completed as client', profile?.bounties_completed_as_client.toString());
-    console.log('progile bounties rewarded', profile?.bounties_rewarded.toString());
-    console.log('progile bounties posted', profile?.bounties_posted.toString());
-    console.log('progile total sol earned', profile?.total_sol_earned.toString());
-    console.log('progile total sol spent', profile?.total_sol_spent.toString());
-    console.log('progile success rate', profile?.success_rate.toString());
-
     
 
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView style={styles.scrollView}>
-                {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>Profile</Text>
                 </View>
 
-                {/* User Info */}
                 <View style={styles.userCard}>
                     <View style={styles.userInfo}>
                         <Avatar
@@ -96,7 +85,6 @@ export default function ProfileScreen() {
                         <Text style={styles.userName}>{profile.username}</Text>
                         <Text style={styles.userEmail}>{profile.email}</Text>
 
-                        {/* Role Toggle */}
                         <View style={styles.roleToggle}>
                             <TouchableOpacity
                                 onPress={() => setIsHunter(true)}
@@ -117,11 +105,10 @@ export default function ProfileScreen() {
                         </View>
                     </View>
 
-                    {/* Stats */}
                     <View style={styles.statsContainer}>
                         <View style={styles.statItem}>
                             <Text style={styles.statValue}>
-                                {isHunter ? profile.bounties_completed.toString() : profile.bounties_posted.toString()}
+                                {isHunter ? profile.bountiesCompleted.toString() : profile.bountiesPosted.toString()}
                             </Text>
                             <Text style={styles.statLabel}>
                                 {isHunter ? 'Completed' : 'Posted'}
@@ -129,14 +116,14 @@ export default function ProfileScreen() {
                         </View>
                         <View style={styles.statItem}>
                             <Text style={[styles.statValue, styles.statValueGreen]}>
-                                {isHunter ? lamportsToSol(profile.total_sol_earned.toNumber()) : lamportsToSol(profile.total_sol_spent.toNumber())} SOL
+                                {isHunter ? lamportsToSol(profile.totalSolEarned.toNumber()) : lamportsToSol(profile.totalSolSpent.toNumber())} SOL
                             </Text>
                             <Text style={styles.statLabel}>
                                 {isHunter ? 'Earned' : 'Spent'}
                             </Text>
                         </View>
                         <View style={styles.statItem}>
-                            <Text style={[styles.statValue, styles.statValueBlue]}>{isHunter ? profile.success_rate.toString() : profile.bounties_completed_as_client.toNumber()}</Text>
+                            <Text style={[styles.statValue, styles.statValueBlue]}>{isHunter ? `${profile.successRate.toString()} %` : profile.bountiesCompletedAsClient.toNumber()}</Text>
                             <Text style={styles.statLabel}>{isHunter ? 'Success' : 'Rewarded'}</Text>
                         </View>
                     </View>

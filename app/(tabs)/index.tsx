@@ -24,10 +24,6 @@ export default function BrowseBounties() {
     const [showProfileModal, setShowProfileModal] = useState(false);
     const router = useRouter();
 
-    console.log('bounties total', bounties.length);
-    console.log('bounties', bounties);
-
-
 
     const handlePress = (bounty: Bounty) => {
         setSelectedBounty(bounty);
@@ -36,6 +32,9 @@ export default function BrowseBounties() {
 
 
     const filteredBounties = bounties.filter((bounty) => {
+        if (bounty.status === 'completed' || bounty.status === 'claimed') {
+            return false;
+        }
         const matchesSearch =
             bounty.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             bounty.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -154,7 +153,6 @@ export default function BrowseBounties() {
                     setModalVisible(false);
                 }}
                 onAward={(bounty, hunterId) => {
-                    console.log(`Awarding bounty ${bounty.id} to hunter ${hunterId}`);
                     setModalVisible(false);
                 }}
             />

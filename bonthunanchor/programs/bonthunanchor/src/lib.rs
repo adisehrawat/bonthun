@@ -2,7 +2,8 @@ use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 use anchor_lang::system_program::Transfer;
 
-declare_id!("2AngWZhK6WtbkuYJQZUiweynLFx4XHueXMN8Wv3eeyC8");
+declare_id!("ASDBLcyRSj8bWcQNFiPBJMtDLkWmWytsbYrC7B6RJ81M");
+
 
 #[program]
 pub mod bonthunanchor {
@@ -249,6 +250,7 @@ pub struct ClaimBounty<'info> {
     pub hunter_profile: Account<'info, UserProfile>,
     #[account(mut)]
     pub hunter: Signer<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
@@ -349,6 +351,7 @@ pub struct Submission {
     pub submission_link: String,
     pub submitted_at: i64,
     pub selected: bool,
+    pub bump: u8,
 }
 
 // Errors

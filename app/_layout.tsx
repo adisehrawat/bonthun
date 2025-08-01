@@ -49,11 +49,11 @@ export default function RootLayout() {
         <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
             <AppProviders>
                 <AppProvider>
-                <ProfileProvider>
-                    <AppSplashController />
-                    <RootNavigator />
-                    <StatusBar style="auto" />
-                </ProfileProvider>
+                    <ProfileProvider>
+                        <AppSplashController />
+                        <RootNavigator />
+                        <StatusBar style="auto" />
+                    </ProfileProvider>
                 </AppProvider>
             </AppProviders>
             <PortalHost />

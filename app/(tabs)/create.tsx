@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import Toast from 'react-native-toast-message';
+import { useProfile } from '@/contexts/ProfileContext';
 
 function parseTimeLimit(input: string): number {
     const regex = /(\d+)\s*(second|minute|hour|day|week)s?/i;
@@ -31,6 +32,8 @@ function parseTimeLimit(input: string): number {
 export default function CreateBounty() {
     const createBounty = useCreateBounty();
     const { refreshBounties } = useApp();
+    const { refreshProfile } = useProfile();
+
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -68,6 +71,7 @@ export default function CreateBounty() {
             });
             router.push('/');
             refreshBounties();
+            refreshProfile();
             Toast.show({
                 type: 'success',
                 text1: 'Bounty created successfully',

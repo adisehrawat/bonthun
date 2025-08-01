@@ -34,16 +34,14 @@ export const ProfileProvider: React.FC<ProfileProviderProps> = ({ children }) =>
             return;
         }
 
-        console.log('[ProfileContext] fetching for', selectedAccount?.publicKey.toString());
 
         const provider = new AnchorProvider(
-            connection,
+            connection as any,
             { publicKey: selectedAccount.publicKey } as any,
             { commitment: 'processed' }
         );
 
         const profileAccount = await fetchProfile(selectedAccount.publicKey, provider);
-        console.log('[ProfileContext] profile fetched', profileAccount);
 
         if (profileAccount) {
             setProfile({
@@ -51,16 +49,17 @@ export const ProfileProvider: React.FC<ProfileProviderProps> = ({ children }) =>
                 username: profileAccount.username,
                 email: profileAccount.email,
                 avatar: profileAccount.avatar,
-                is_hunter: profileAccount.isHunter,
-                is_client: profileAccount.isClient,
-                bounties_completed: profileAccount.bountiesCompleted,
-                bounties_applied: profileAccount.bountiesApplied,
-                total_sol_earned: profileAccount.totalSolEarned,
-                success_rate: profileAccount.successRate,
-                bounties_posted: profileAccount.bountiesPosted,
-                total_sol_spent: profileAccount.totalSolSpent,
-                bounties_rewarded: profileAccount.bountiesRewarded,
-                bounties_completed_as_client: profileAccount.bountiesCompletedAsClient,
+                isHunter: profileAccount.isHunter,
+                isClient: profileAccount.isClient,
+                bountiesCompleted: profileAccount.bountiesCompleted,
+                bountiesApplied: profileAccount.bountiesApplied,
+                totalSolEarned: profileAccount.totalSolEarned,
+                successRate: profileAccount.successRate,
+                bountiesPosted: profileAccount.bountiesPosted,
+                totalSolSpent: profileAccount.totalSolSpent,
+                bountiesRewarded: profileAccount.bountiesRewarded,
+                bountiesCompletedAsClient: profileAccount.bountiesCompletedAsClient,
+                bump: profileAccount.bump,
             });
         } else {
             setProfile(null);
