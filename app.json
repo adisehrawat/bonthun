@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.adiseh.bonthun"
     },
     "android": {
       "adaptiveIcon": {
@@ -32,9 +33,9 @@
           "backgroundColor": "#FFFFFF",
           "dark": {
             "backgroundColor": "#000000",
-            "image": "./assets/images/icon2.png"
+            "image": "./assets/images/icon.png"
           },
-          "image": "./assets/images/icon2.png",
+          "image": "./assets/images/icon.png",
           "imageWidth": 200,
           "resizeMode": "contain"
         }
@@ -48,8 +49,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "1948fa58-972d-4e30-ae6f-93878b4283d2"
+        "projectId": "d2e7766c-6906-4e10-9c84-d768dae5f080"
       }
-    }
+    },
+    "owner": "nallaadi"
   }
 }
